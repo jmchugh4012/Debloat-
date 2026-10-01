@@ -1,4 +1,4 @@
-<title>Locked In Picks</title>
+<title>JMbets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
@@ -35,7 +35,7 @@
 
 * { box-sizing: border-box; }
 body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; padding: 32px 16px 64px; }
-.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 28px; }
+.wrap { max-width: 780px; margin: 0 auto; display: grid; gap: 28px; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -45,7 +45,8 @@ button { cursor: pointer; }
 .head-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
 .who { min-width: 0; }
 .eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-h1 { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 9vw, 64px); line-height: 0.95; margin: 4px 0 6px; text-transform: uppercase; letter-spacing: 0.01em; text-wrap: balance; overflow-wrap: anywhere; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(48px, 11vw, 76px); line-height: 0.9; margin: 4px 0 8px; letter-spacing: 0.01em; }
+h1 span { color: var(--accent); }
 .bio { margin: 0; color: var(--muted); max-width: 60ch; overflow-wrap: anywhere; }
 .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
@@ -61,16 +62,24 @@ h1 { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 9vw, 
 
 /* Record strip */
 .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--card); overflow: hidden; }
-.stat { padding: 12px 14px; display: grid; gap: 2px; border-left: 1px solid var(--line); }
+.stat { padding: 12px 14px; display: grid; gap: 2px; border-left: 1px solid var(--line); min-width: 0; }
 .stat:first-child { border-left: 0; }
-.stat .v { font-family: var(--mono); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat .v { font-family: var(--mono); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stat .k { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .pos { color: var(--won); } .neg { color: var(--lost); }
-@media (max-width: 520px) {
+@media (max-width: 560px) {
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat:nth-child(3) { border-left: 0; }
   .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
+
+.leagues { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.leagues table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.leagues th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 8px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.leagues td { padding: 8px 14px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.leagues tr:last-child td { border-bottom: 0; }
+.leagues td:first-child { font-family: var(--display); font-weight: 700; font-size: 17px; text-transform: uppercase; }
+.leagues .num { text-align: right; }
 
 .followers { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
 .faces { display: flex; }
@@ -78,6 +87,8 @@ h1 { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 9vw, 
 .faces img:first-child { margin-left: 0; }
 
 .notice { font-size: 13px; color: var(--muted); background: var(--tint); border-radius: 6px; padding: 8px 12px; }
+.mine { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 14px; background: var(--tint); border-radius: 6px; padding: 10px 14px; }
+.mine b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* Panels */
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 14px; }
@@ -91,25 +102,32 @@ textarea { resize: vertical; min-height: 64px; }
 .hint { font-size: 12px; color: var(--muted); font-family: var(--mono); text-transform: none; letter-spacing: 0; font-weight: 500; }
 .form-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .err { color: var(--lost); font-size: 13px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+.seg button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 
 /* Tabs */
 .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card); }
+.tabs { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card); }
 .tabs button { border: 0; background: none; padding: 6px 14px; font-weight: 600; font-size: 13px; color: var(--muted); }
 .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
 .count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
 
 /* Slips */
 .slips { display: grid; gap: 12px; }
-.slip { display: grid; grid-template-columns: 112px minmax(0, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.slip { display: grid; grid-template-columns: 124px minmax(0, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .stub { border-right: 2px dashed var(--line); padding: 14px 12px; display: grid; align-content: center; gap: 2px; text-align: center; background: var(--tint); }
-.stub .odds { font-family: var(--mono); font-weight: 600; font-size: 24px; font-variant-numeric: tabular-nums; }
-.stub .imp, .stub .risk { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stub .league { font-family: var(--display); font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: 0.02em; }
+.stub .odds { font-family: var(--mono); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stub .imp { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .slip-body { padding: 14px 16px; display: grid; gap: 6px; min-width: 0; }
 .slip-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .meta { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; overflow-wrap: anywhere; }
 .pick { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
 .event { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.money { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--muted); }
+.money b { font-family: var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.money b.pos { color: var(--won); } .money b.neg { color: var(--lost); }
 .note { font-size: 14px; border-left: 2px solid var(--line); padding-left: 10px; margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .chip { flex: none; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; border: 1px solid currentColor; font-family: var(--mono); }
 .chip.pending { color: var(--pending); } .chip.won { color: var(--won); } .chip.lost { color: var(--lost); } .chip.push { color: var(--push); }
@@ -119,11 +137,12 @@ textarea { resize: vertical; min-height: 64px; }
 .tailers { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
 .tailers .faces img { width: 22px; height: 22px; }
 .grade { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.result { font-family: var(--mono); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stake { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.stake input { width: 84px; padding: 4px 8px; font-size: 13px; font-family: var(--mono); }
+.copybox { flex-basis: 100%; font-family: var(--mono); font-size: 12px; }
 @media (max-width: 460px) {
   .slip { grid-template-columns: minmax(0, 1fr); }
   .stub { border-right: 0; border-bottom: 2px dashed var(--line); grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 12px; text-align: left; padding: 10px 16px; }
-  .stub .odds { font-size: 20px; }
 }
 
 .empty { text-align: center; padding: 40px 20px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); display: grid; gap: 6px; }
@@ -136,61 +155,75 @@ textarea { resize: vertical; min-height: 64px; }
   <header class="head">
     <div class="head-top">
       <div class="who">
-        <div class="eyebrow">Tracked picks · American odds · 1u = 1 unit</div>
-        <h1 id="handle">Locked In Picks</h1>
-        <p class="bio" id="bio">Every bet posted before the game, graded after. Follow to keep up and tail the ones you like.</p>
+        <div class="eyebrow">Every bet tracked · win, loss and profit</div>
+        <h1>JM<span>bets</span></h1>
+        <p class="bio" id="bio">Every bet posted before the game, graded after. Follow along and tail the ones you like.</p>
       </div>
       <div class="actions" id="head-actions"></div>
     </div>
     <div class="board" aria-label="Record">
       <div class="stat"><span class="v" id="s-record">0-0-0</span><span class="k">W-L-P</span></div>
-      <div class="stat"><span class="v" id="s-units">0.00u</span><span class="k">Units</span></div>
+      <div class="stat"><span class="v" id="s-profit">$0.00</span><span class="k">Profit</span></div>
+      <div class="stat"><span class="v" id="s-wager">$0.00</span><span class="k">Wagered</span></div>
       <div class="stat"><span class="v" id="s-roi">—</span><span class="k">ROI</span></div>
-      <div class="stat"><span class="v" id="s-win">—</span><span class="k">Win rate</span></div>
     </div>
+    <div class="leagues" id="leagues" hidden></div>
+    <div class="mine" id="mine" hidden></div>
     <div class="followers" id="followers"></div>
     <div class="notice" id="notice" hidden></div>
   </header>
 
   <section class="panel" id="profile-panel" hidden>
-    <h2>Edit profile</h2>
+    <h2>Edit bio</h2>
     <form id="profile-form" class="grid">
-      <label class="full">Name shown at the top<input id="pf-handle" maxlength="40" placeholder="e.g. Jake's Locks"></label>
-      <label class="full">Short bio<textarea id="pf-bio" maxlength="200" placeholder="What you bet, how you size it"></textarea></label>
-      <div class="form-foot full"><button class="btn primary" type="submit">Save profile</button><button class="btn" type="button" id="pf-cancel">Cancel</button></div>
+      <label class="full">Short bio<textarea id="pf-bio" maxlength="200" placeholder="What you bet and how you size it"></textarea></label>
+      <div class="form-foot full"><button class="btn primary" type="submit">Save bio</button><button class="btn" type="button" id="pf-cancel">Cancel</button></div>
     </form>
   </section>
 
   <section class="panel" id="post-panel" hidden>
-    <h2>Post a bet</h2>
+    <h2 id="post-title">Post a bet</h2>
     <form id="post-form" class="grid" novalidate>
-      <label>Sport<select id="f-sport">
-        <option>NFL</option><option>NBA</option><option>MLB</option><option>NHL</option><option>NCAAF</option><option>NCAAB</option><option>Soccer</option><option>UFC</option><option>Tennis</option><option>Golf</option><option>Other</option>
-      </select></label>
+      <label>League<input id="f-league" list="league-list" maxlength="20" placeholder="NFL" value="NFL"></label>
+      <datalist id="league-list">
+        <option value="NFL"></option><option value="NBA"></option><option value="MLB"></option><option value="NHL"></option>
+        <option value="NCAAF"></option><option value="NCAAB"></option><option value="WNBA"></option><option value="MLS"></option>
+        <option value="EPL"></option><option value="Champions League"></option><option value="UFC"></option><option value="ATP"></option>
+        <option value="WTA"></option><option value="PGA"></option><option value="F1"></option>
+      </datalist>
       <label>Bet type<select id="f-market">
         <option>Spread</option><option>Moneyline</option><option>Total</option><option>Player prop</option><option>Parlay</option><option>Future</option><option>Other</option>
       </select></label>
       <label class="full">Your pick<input id="f-pick" maxlength="80" placeholder="Chiefs -3.5" required></label>
       <label class="full">Game or event<input id="f-event" maxlength="100" placeholder="Bills @ Chiefs"></label>
       <label>Odds <span class="hint" id="f-odds-hint">−110 → 52.4% implied</span><input id="f-odds" inputmode="numeric" placeholder="-110" value="-110"></label>
-      <label>Units risked<input id="f-units" inputmode="decimal" placeholder="1" value="1"></label>
+      <label>Amount ($) <span class="hint" id="f-amt-hint">to win $90.91</span><input id="f-amount" inputmode="decimal" placeholder="100" value="100"></label>
       <label class="full">Game time<input id="f-time" type="datetime-local"></label>
+      <div class="full" style="display:grid;gap:4px"><span class="eyebrow">Result</span>
+        <div class="seg" id="f-status">
+          <button type="button" data-s="pending" aria-pressed="true">Open</button>
+          <button type="button" data-s="won" aria-pressed="false">Won</button>
+          <button type="button" data-s="lost" aria-pressed="false">Lost</button>
+          <button type="button" data-s="push" aria-pressed="false">Push</button>
+        </div>
+      </div>
       <label class="full">Why (optional)<textarea id="f-note" maxlength="500" placeholder="Short reasoning for your followers"></textarea></label>
-      <div class="form-foot full"><button class="btn primary" type="submit" id="f-submit">Post bet</button><span class="err" id="f-err"></span></div>
+      <div class="form-foot full"><button class="btn primary" type="submit" id="f-submit">Post bet</button><button class="btn" type="button" id="f-cancel" hidden>Cancel edit</button><span class="err" id="f-err"></span></div>
     </form>
   </section>
 
   <section style="display:grid;gap:12px">
     <div class="bar">
-      <div class="tabs" role="tablist">
-        <button role="tab" id="tab-open" data-f="open" aria-selected="true">Open</button>
-        <button role="tab" id="tab-settled" data-f="settled" aria-selected="false">Settled</button>
-        <button role="tab" id="tab-all" data-f="all" aria-selected="false">All</button>
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-f="open" aria-selected="true">Open</button>
+        <button role="tab" data-f="settled" aria-selected="false">Settled</button>
+        <button role="tab" data-f="all" aria-selected="false">All</button>
+        <button role="tab" data-f="mine" aria-selected="false" id="tab-mine" hidden>My tails</button>
       </div>
       <span class="count" id="count"></span>
     </div>
     <div class="slips" id="slips">
-      <div class="empty"><strong>Loading picks</strong><span>Open bets will show up here as soon as they're posted.</span></div>
+      <div class="empty"><strong>Loading bets</strong><span>Open bets show up here as soon as they're posted.</span></div>
     </div>
   </section>
 
@@ -206,6 +239,7 @@ textarea { resize: vertical; min-height: 64px; }
       if (v == null || v === false) continue;
       if (k === "class") el.className = v;
       else if (k === "text") el.textContent = v;
+      else if (k === "value") el.value = v;
       else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
       else el.setAttribute(k, v === true ? "" : v);
     }
@@ -213,9 +247,9 @@ textarea { resize: vertical; min-height: 64px; }
     return el;
   };
 
-  let db = null, user = null, myId = null, isAdmin = false, isOwner = false, canFollow = null;
-  let bets = [], fans = {}, meta = {}, filter = "open", confirmDelete = null;
-  let writing = false;
+  let db = null, user = null, myId = null, isAdmin = false, canFollow = null;
+  let bets = [], fans = {}, meta = {}, filter = "open", confirmDelete = null, editing = null, copied = null;
+  let writing = false, formStatus = "pending";
 
   // ---- betting math -----------------------------------------------------
   const parseOdds = (s) => {
@@ -223,11 +257,15 @@ textarea { resize: vertical; min-height: 64px; }
     if (!Number.isFinite(n) || Math.abs(n) < 100) return null;
     return Math.round(n);
   };
+  const parseMoney = (s) => { const n = Number(String(s).replace(/[$,\s]/g, "")); return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null; };
   const fmtOdds = (o) => (o > 0 ? "+" + o : "−" + Math.abs(o));
   const implied = (o) => (o > 0 ? 100 / (o + 100) : -o / (-o + 100));
-  const toWin = (o, u) => (o > 0 ? u * o / 100 : u * 100 / -o);
-  const result = (b) => b.status === "won" ? toWin(b.odds, b.units) : b.status === "lost" ? -b.units : 0;
-  const fmtU = (u) => (u > 0 ? "+" : u < 0 ? "−" : "") + Math.abs(u).toFixed(2) + "u";
+  const toWin = (o, amt) => (o > 0 ? amt * o / 100 : amt * 100 / -o);
+  const profitOf = (status, odds, amt) => status === "won" ? toWin(odds, amt) : status === "lost" ? -amt : 0;
+  const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const fmt$ = (n) => usd.format(Math.abs(n));
+  const fmtP = (n) => (n > 0.004 ? "+" : n < -0.004 ? "−" : "") + fmt$(n);
+  const cls = (n) => (n > 0.004 ? "pos" : n < -0.004 ? "neg" : "");
 
   const fmtTime = (s) => {
     if (!s) return "";
@@ -235,28 +273,80 @@ textarea { resize: vertical; min-height: 64px; }
     if (isNaN(d)) return "";
     return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   };
+  const toLocalInput = (s) => {
+    const d = new Date(s); if (!s || isNaN(d)) return "";
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+
+  function summarize(list) {
+    const s = { w: 0, l: 0, p: 0, wagered: 0, risked: 0, profit: 0 };
+    for (const x of list) {
+      if (x.status === "pending") continue;
+      s[x.status[0]]++;
+      s.wagered += x.amount;
+      if (x.status !== "push") s.risked += x.amount;
+      s.profit += x.profit;
+    }
+    s.roi = s.risked ? (s.profit / s.risked) * 100 : null;
+    return s;
+  }
+
+  const myTails = () => fans[myId]?.tails || {};
+  const tailStake = (bet, v) => (typeof v === "number" && v > 0 ? v : bet.amount);
 
   // ---- rendering --------------------------------------------------------
   function renderHeader() {
-    $("#handle").textContent = meta.handle || "Locked In Picks";
-    $("#bio").textContent = meta.bio || "Every bet posted before the game, graded after. Follow to keep up and tail the ones you like.";
+    $("#bio").textContent = meta.bio || "Every bet posted before the game, graded after. Follow along and tail the ones you like.";
 
-    const settled = bets.filter((b) => b.status !== "pending");
-    const w = settled.filter((b) => b.status === "won").length;
-    const l = settled.filter((b) => b.status === "lost").length;
-    const p = settled.filter((b) => b.status === "push").length;
-    const units = settled.reduce((a, b) => a + result(b), 0);
-    const risked = settled.filter((b) => b.status !== "push").reduce((a, b) => a + b.units, 0);
-    $("#s-record").textContent = `${w}-${l}-${p}`;
-    const su = $("#s-units"); su.textContent = fmtU(units); su.className = "v " + (units > 0 ? "pos" : units < 0 ? "neg" : "");
-    const roi = risked ? (units / risked) * 100 : null;
-    const sr = $("#s-roi"); sr.textContent = roi == null ? "—" : (roi > 0 ? "+" : "") + roi.toFixed(1) + "%"; sr.className = "v " + (roi > 0 ? "pos" : roi < 0 ? "neg" : "");
-    $("#s-win").textContent = w + l ? ((w / (w + l)) * 100).toFixed(1) + "%" : "—";
+    const s = summarize(bets);
+    $("#s-record").textContent = `${s.w}-${s.l}-${s.p}`;
+    const sp = $("#s-profit"); sp.textContent = fmtP(s.profit); sp.className = "v " + cls(s.profit);
+    $("#s-wager").textContent = fmt$(s.wagered);
+    const sr = $("#s-roi"); sr.textContent = s.roi == null ? "—" : (s.roi > 0 ? "+" : "") + s.roi.toFixed(1) + "%"; sr.className = "v " + cls(s.roi || 0);
+
+    // per-league table
+    const byLeague = {};
+    for (const b of bets) (byLeague[b.league] ||= []).push(b);
+    const rows = Object.entries(byLeague).map(([lg, list]) => ({ lg, s: summarize(list), open: list.filter((b) => b.status === "pending").length }))
+      .sort((a, b) => b.s.wagered - a.s.wagered || a.lg.localeCompare(b.lg));
+    const lbox = $("#leagues");
+    lbox.hidden = rows.length === 0;
+    if (rows.length) {
+      lbox.replaceChildren(h("table", {},
+        h("thead", {}, h("tr", {}, h("th", { text: "League" }), h("th", { text: "W-L-P" }), h("th", { class: "num", text: "Open" }), h("th", { class: "num", text: "Wagered" }), h("th", { class: "num", text: "Profit" }), h("th", { class: "num", text: "ROI" }))),
+        h("tbody", {}, rows.map(({ lg, s, open }) => h("tr", {},
+          h("td", { text: lg }), h("td", { text: `${s.w}-${s.l}-${s.p}` }), h("td", { class: "num", text: String(open) }),
+          h("td", { class: "num", text: fmt$(s.wagered) }), h("td", { class: "num " + cls(s.profit), text: fmtP(s.profit) }),
+          h("td", { class: "num " + cls(s.roi || 0), text: s.roi == null ? "—" : (s.roi > 0 ? "+" : "") + s.roi.toFixed(1) + "%" }),
+        ))),
+      ));
+    }
+
+    // follower's own tail record
+    const mine = $("#mine");
+    const tails = myTails();
+    const tailed = bets.filter((b) => tails[b.id]).map((b) => {
+      const amt = tailStake(b, tails[b.id]);
+      return { ...b, amount: amt, profit: profitOf(b.status, b.odds, amt) };
+    });
+    mine.hidden = isAdmin || !myId || !tailed.length;
+    if (!mine.hidden) {
+      const t = summarize(tailed);
+      const open = tailed.filter((b) => b.status === "pending");
+      mine.replaceChildren(
+        h("span", {}, "Your tails: ", h("b", { text: `${t.w}-${t.l}-${t.p}` })),
+        h("span", {}, "Profit ", h("b", { class: cls(t.profit), text: fmtP(t.profit) })),
+        h("span", {}, "Wagered ", h("b", { text: fmt$(t.wagered) })),
+        open.length ? h("span", {}, "Open ", h("b", { text: `${open.length} · ${fmt$(open.reduce((a, b) => a + b.amount, 0))}` })) : null,
+      );
+    }
+    $("#tab-mine").hidden = isAdmin || !myId;
 
     const acts = $("#head-actions"); acts.replaceChildren();
     if (isAdmin) {
       acts.append(
-        h("button", { class: "btn", type: "button", text: "Edit profile", onclick: openProfile }),
+        h("button", { class: "btn", type: "button", text: "Edit bio", onclick: openProfile }),
         h("button", { class: "btn primary", type: "button", text: $("#post-panel").hidden ? "Post a bet" : "Close", onclick: togglePost }),
       );
     } else if (db && myId) {
@@ -274,10 +364,9 @@ textarea { resize: vertical; min-height: 64px; }
     const ids = Object.keys(fans).filter((id) => fans[id]?.following);
     box.replaceChildren();
     if (!db) return;
-    const label = h("span", { text: ids.length === 1 ? "1 follower" : `${ids.length} followers` });
     if (!ids.length) { box.append(h("span", { text: isAdmin ? "No followers yet. Share this page so people can follow you." : "No followers yet. Be the first." })); return; }
     const faces = h("div", { class: "faces" });
-    box.append(faces, label);
+    box.append(faces, h("span", { text: ids.length === 1 ? "1 follower" : `${ids.length} followers` }));
     if (user) {
       const shown = ids.slice(0, 8);
       const ps = await user.profiles(shown);
@@ -287,18 +376,25 @@ textarea { resize: vertical; min-height: 64px; }
 
   async function renderSlips() {
     const box = $("#slips");
-    for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.f === filter));
-    const list = bets.filter((b) => filter === "all" || (filter === "open" ? b.status === "pending" : b.status !== "pending"));
+    for (const b of document.querySelectorAll("#tabs button")) b.setAttribute("aria-selected", String(b.dataset.f === filter));
+    const tails = myTails();
+    const list = bets.filter((b) =>
+      filter === "all" ? true :
+      filter === "open" ? b.status === "pending" :
+      filter === "settled" ? b.status !== "pending" :
+      !!tails[b.id]);
     $("#count").textContent = list.length === 1 ? "1 bet" : `${list.length} bets`;
 
     if (!db) {
-      box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: "Sign in to see picks" }), h("span", { text: "Picks are stored with this page and load once you're signed in to Claude." })));
+      box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: "Sign in to see bets" }), h("span", { text: "Bets are stored with this page and load once you're signed in to Claude." })));
       return;
     }
     if (!list.length) {
       const msg = !bets.length
-        ? (isAdmin ? ["No bets yet", "Use “Post a bet” above. Your followers see it right away."] : ["No picks posted yet", "Follow now and new bets will appear here as soon as they're posted."])
-        : filter === "open" ? ["No open bets", "Everything posted so far has been graded. Check the Settled tab."] : ["Nothing settled yet", "Bets show up here once they're graded won, lost or push."];
+        ? (isAdmin ? ["No bets yet", "Use “Post a bet” above. Followers see it right away."] : ["No bets posted yet", "Follow now and new bets will appear here as soon as they're posted."])
+        : filter === "open" ? ["No open bets", "Everything posted so far has been graded. Check the Settled tab."]
+        : filter === "mine" ? ["You haven't tailed anything", "Hit “Tail” on an open bet to add it to your tracker."]
+        : ["Nothing settled yet", "Bets show up here once they're graded won, lost or push."];
       box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: msg[0] }), h("span", { text: msg[1] })));
       return;
     }
@@ -311,10 +407,18 @@ textarea { resize: vertical; min-height: 64px; }
     box.replaceChildren(...list.map((b) => slip(b, tailIds[b.id] || [], ps)));
   }
 
+  const slipText = (b) => `${b.league} · ${b.pick} ${fmtOdds(b.odds)}${b.event ? " · " + b.event : ""}${b.startsAt ? " · " + fmtTime(b.startsAt) : ""} · ${fmt$(b.amount)} (JMbets)`;
+
   function slip(b, tailers, ps) {
     const st = b.status;
     const label = { pending: "Open", won: "Won", lost: "Lost", push: "Push" }[st];
-    const res = result(b);
+
+    const money = h("div", { class: "money" },
+      h("span", {}, "Amount ", h("b", { text: fmt$(b.amount) })),
+      st === "pending"
+        ? h("span", {}, "To win ", h("b", { text: fmt$(toWin(b.odds, b.amount)) }))
+        : h("span", {}, "Profit ", h("b", { class: cls(b.profit), text: fmtP(b.profit) })),
+    );
 
     const foot = h("div", { class: "slip-foot" });
     const tailBox = h("div", { class: "tailers" });
@@ -327,7 +431,7 @@ textarea { resize: vertical; min-height: 64px; }
     foot.append(tailBox);
 
     const right = h("div", { class: "grade" });
-    if (st !== "pending") right.append(h("span", { class: "result " + (res > 0 ? "pos" : res < 0 ? "neg" : ""), text: fmtU(res) }));
+    const copyBtn = h("button", { class: "btn small", type: "button", text: copied === b.id ? "Copied ✓" : "Copy bet", onclick: () => copyBet(b) });
     if (isAdmin) {
       if (confirmDelete === b.id) {
         right.append(
@@ -336,32 +440,48 @@ textarea { resize: vertical; min-height: 64px; }
           h("button", { class: "btn small", type: "button", text: "Keep", onclick: () => { confirmDelete = null; renderSlips(); } }),
         );
       } else {
-        for (const s of ["won", "lost", "push", "pending"]) {
-          if (s === st) continue;
-          right.append(h("button", { class: "btn small", type: "button", text: s === "pending" ? "Reopen" : s[0].toUpperCase() + s.slice(1), onclick: () => grade(b.id, s) }));
-        }
-        right.append(h("button", { class: "link", type: "button", text: "Delete", onclick: () => { confirmDelete = b.id; renderSlips(); } }));
+        for (const s of ["won", "lost", "push"]) if (s !== st) right.append(h("button", { class: "btn small", type: "button", text: s[0].toUpperCase() + s.slice(1), onclick: () => grade(b.id, s) }));
+        if (st !== "pending") right.append(h("button", { class: "btn small", type: "button", text: "Reopen", onclick: () => grade(b.id, "pending") }));
+        right.append(
+          h("button", { class: "link", type: "button", text: "Edit", onclick: () => startEdit(b) }),
+          h("button", { class: "link", type: "button", text: "Delete", onclick: () => { confirmDelete = b.id; renderSlips(); } }),
+        );
       }
-    } else if (myId && st === "pending") {
-      const on = !!fans[myId]?.tails?.[b.id];
-      right.append(h("button", { class: "btn small " + (on ? "on" : ""), type: "button", text: on ? "Tailing ✓" : "Tail this", "aria-pressed": on ? "true" : "false", disabled: writing || canFollow === false, onclick: () => toggleTail(b.id) }));
+    } else if (myId) {
+      const tv = myTails()[b.id];
+      if (tv) {
+        const stake = tailStake(b, tv);
+        const inp = h("input", { id: "stake-" + b.id, inputmode: "decimal", value: stake.toFixed(2), "aria-label": "Your amount", disabled: writing || st !== "pending" });
+        inp.addEventListener("change", () => { const v = parseMoney(inp.value); if (v) setTail(b.id, v); else inp.value = stake.toFixed(2); });
+        right.append(
+          h("label", { class: "stake", for: "stake-" + b.id }, "Your $", inp),
+          st === "pending" ? h("button", { class: "btn small on", type: "button", text: "Tailing ✓", title: "Click to stop tailing", "aria-pressed": "true", disabled: writing, onclick: () => setTail(b.id, null) }) : null,
+        );
+      } else if (st === "pending") {
+        right.append(h("button", { class: "btn small primary", type: "button", text: `Tail ${fmt$(b.amount)}`, disabled: writing || canFollow === false, onclick: () => { copyBet(b); setTail(b.id, b.amount); } }));
+      }
+      right.append(copyBtn);
+    } else {
+      right.append(copyBtn);
     }
     foot.append(right);
+    if (copied === "fail:" + b.id) foot.append(h("input", { class: "copybox", readonly: true, value: slipText(b), "aria-label": "Bet details to copy", onfocus: (e) => e.target.select() }));
 
     const when = fmtTime(b.startsAt);
     return h("article", { class: "slip " + st },
       h("div", { class: "stub" },
+        h("span", { class: "league", text: b.league }),
         h("span", { class: "odds", text: fmtOdds(b.odds) }),
-        h("span", { class: "risk", text: `${b.units}u to win ${toWin(b.odds, b.units).toFixed(2)}u` }),
         h("span", { class: "imp", text: (implied(b.odds) * 100).toFixed(1) + "% implied" }),
       ),
       h("div", { class: "slip-body" },
         h("div", { class: "slip-top" },
-          h("span", { class: "meta", text: [b.sport, b.market, when].filter(Boolean).join(" · ") }),
+          h("span", { class: "meta", text: [b.market, when].filter(Boolean).join(" · ") }),
           h("span", { class: "chip " + st, text: label }),
         ),
         h("div", { class: "pick", text: b.pick }),
         b.event ? h("div", { class: "event", text: b.event }) : null,
+        money,
         b.note ? h("p", { class: "note", text: b.note }) : null,
         foot,
       ),
@@ -370,62 +490,113 @@ textarea { resize: vertical; min-height: 64px; }
 
   const renderAll = () => { renderHeader(); renderFollowers(); renderSlips(); };
 
+  function copyBet(b) {
+    const done = (ok) => { copied = ok ? b.id : "fail:" + b.id; renderSlips(); if (ok) setTimeout(() => { if (copied === b.id) { copied = null; renderSlips(); } }, 1500); };
+    try { navigator.clipboard.writeText(slipText(b)).then(() => done(true), () => done(false)); } catch { done(false); }
+  }
+
   // ---- owner actions ----------------------------------------------------
+  function setFormStatus(s) {
+    formStatus = s;
+    for (const b of document.querySelectorAll("#f-status button")) b.setAttribute("aria-pressed", String(b.dataset.s === s));
+  }
+  for (const b of document.querySelectorAll("#f-status button")) b.addEventListener("click", () => setFormStatus(b.dataset.s));
+
+  function resetForm() {
+    editing = null;
+    for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time"]) $(id).value = "";
+    setFormStatus("pending");
+    $("#post-title").textContent = "Post a bet";
+    $("#f-submit").textContent = "Post bet";
+    $("#f-cancel").hidden = true;
+    $("#f-err").textContent = "";
+    updateHints();
+  }
   function togglePost() {
-    const p = $("#post-panel"); p.hidden = !p.hidden;
+    const p = $("#post-panel");
+    if (!p.hidden) resetForm();
+    p.hidden = !p.hidden;
     $("#profile-panel").hidden = true;
     renderHeader();
     if (!p.hidden) $("#f-pick").focus();
   }
+  function startEdit(b) {
+    editing = b.id;
+    $("#f-league").value = b.league; $("#f-market").value = b.market || "Other";
+    $("#f-pick").value = b.pick; $("#f-event").value = b.event || "";
+    $("#f-odds").value = String(b.odds); $("#f-amount").value = String(b.amount);
+    $("#f-time").value = toLocalInput(b.startsAt); $("#f-note").value = b.note || "";
+    setFormStatus(b.status);
+    $("#post-title").textContent = "Edit bet";
+    $("#f-submit").textContent = "Save changes";
+    $("#f-cancel").hidden = false;
+    $("#post-panel").hidden = false;
+    $("#profile-panel").hidden = true;
+    updateHints();
+    renderHeader();
+    $("#post-panel").scrollIntoView({ block: "start" });
+    $("#f-pick").focus({ preventScroll: true });
+  }
+  $("#f-cancel").addEventListener("click", () => { resetForm(); $("#post-panel").hidden = true; renderHeader(); });
+
   function openProfile() {
-    $("#pf-handle").value = meta.handle || "";
     $("#pf-bio").value = meta.bio || "";
     $("#profile-panel").hidden = false;
     $("#post-panel").hidden = true;
     renderHeader();
-    $("#pf-handle").focus();
+    $("#pf-bio").focus();
   }
   $("#pf-cancel").addEventListener("click", () => { $("#profile-panel").hidden = true; });
   $("#profile-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    try {
-      await db.doc("meta/profile").set({ handle: $("#pf-handle").value.trim(), bio: $("#pf-bio").value.trim() });
-      $("#profile-panel").hidden = true;
-    } catch (err) { showNotice("Couldn't save the profile. Try again in a moment."); }
+    try { await db.doc("meta/profile").set({ bio: $("#pf-bio").value.trim() }); $("#profile-panel").hidden = true; }
+    catch { showNotice("Couldn't save the bio. Try again in a moment."); }
   });
 
-  const oddsInput = $("#f-odds");
-  oddsInput.addEventListener("input", () => {
-    const o = parseOdds(oddsInput.value);
-    $("#f-odds-hint").textContent = o ? `${fmtOdds(o)} → ${(implied(o) * 100).toFixed(1)}% implied` : "use American odds, e.g. -110 or +150";
-  });
+  function updateHints() {
+    const o = parseOdds($("#f-odds").value), a = parseMoney($("#f-amount").value);
+    $("#f-odds-hint").textContent = o ? `${fmtOdds(o)} → ${(implied(o) * 100).toFixed(1)}% implied` : "American odds, e.g. -110 or +150";
+    $("#f-amt-hint").textContent = o && a ? `to win ${fmt$(toWin(o, a))}` : "";
+  }
+  $("#f-odds").addEventListener("input", updateHints);
+  $("#f-amount").addEventListener("input", updateHints);
 
   $("#post-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const err = $("#f-err");
+    const league = $("#f-league").value.trim();
     const pick = $("#f-pick").value.trim();
-    const odds = parseOdds(oddsInput.value);
-    const units = Number($("#f-units").value);
+    const odds = parseOdds($("#f-odds").value);
+    const amount = parseMoney($("#f-amount").value);
+    if (!league) { err.textContent = "Add the league, like NFL or NBA."; return; }
     if (!pick) { err.textContent = "Add your pick, like “Chiefs -3.5”."; return; }
     if (!odds) { err.textContent = "Odds need to be American odds of at least 100, like -110 or +150."; return; }
-    if (!(units > 0 && units <= 100)) { err.textContent = "Units must be a number between 0 and 100."; return; }
+    if (!amount) { err.textContent = "Enter the amount you bet in dollars, like 50."; return; }
     err.textContent = "";
-    const btn = $("#f-submit"); btn.disabled = true; btn.textContent = "Posting…";
+    const btn = $("#f-submit"); btn.disabled = true;
+    const t = $("#f-time").value;
+    const body = {
+      league: league.toUpperCase().length <= 5 ? league.toUpperCase() : league,
+      market: $("#f-market").value, pick, event: $("#f-event").value.trim(), odds, amount,
+      startsAt: t ? new Date(t).toISOString() : "", note: $("#f-note").value.trim(), status: formStatus,
+      settledAt: formStatus === "pending" ? "" : new Date().toISOString(),
+    };
     try {
-      const t = $("#f-time").value;
-      await db.collection("bets").add({
-        sport: $("#f-sport").value, market: $("#f-market").value, pick,
-        event: $("#f-event").value.trim(), odds, units: Math.round(units * 100) / 100,
-        startsAt: t ? new Date(t).toISOString() : "", note: $("#f-note").value.trim(),
-        status: "pending", postedAt: new Date().toISOString(),
-      });
-      for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time"]) $(id).value = "";
-      filter = "open";
-      btn.textContent = "Posted";
-      setTimeout(() => { btn.textContent = "Post bet"; }, 1200);
+      if (editing) {
+        const prev = bets.find((b) => b.id === editing);
+        await db.doc("bets/" + editing).set({ ...body, postedAt: prev?.postedAt || new Date().toISOString(), settledAt: formStatus === prev?.status ? (prev.settledAt || body.settledAt) : body.settledAt });
+        resetForm();
+        $("#post-panel").hidden = true;
+        renderHeader();
+      } else {
+        await db.collection("bets").add({ ...body, postedAt: new Date().toISOString() });
+        resetForm();
+        filter = formStatus === "pending" ? "open" : filter;
+        btn.textContent = "Posted ✓";
+        setTimeout(() => { if (!editing) btn.textContent = "Post bet"; }, 1200);
+      }
     } catch (e2) {
-      err.textContent = e2?.code === "quota_exceeded" ? "The board is full. Delete some old bets to post new ones." : "Couldn't post the bet. Try again.";
-      btn.textContent = "Post bet";
+      err.textContent = e2?.code === "quota_exceeded" ? "The board is full. Delete some old bets to post new ones." : "Couldn't save the bet. Try again.";
     } finally { btn.disabled = false; }
   });
 
@@ -447,7 +618,7 @@ textarea { resize: vertical; min-height: 64px; }
     } catch (e) {
       if (e?.code === "invalid_argument") {
         canFollow = false;
-        showNotice("You can view these picks, but following needs Contributor access. Ask the page owner to share it with you as a Contributor.");
+        showNotice("You can view these bets, but following and tailing need Contributor access. Ask the page owner to share it with you as a Contributor.");
       } else showNotice("Couldn't save that. Try again in a moment.");
     } finally { writing = false; renderAll(); }
   }
@@ -460,16 +631,15 @@ textarea { resize: vertical; min-height: 64px; }
     if (m.following) m.since = new Date().toISOString();
     saveMine(m);
   }
-  function toggleTail(betId) {
+  function setTail(betId, amount) {
     const m = mine();
-    if (m.tails[betId]) delete m.tails[betId]; else m.tails[betId] = true;
-    if (!fans[myId]?.following && m.tails[betId]) m.following = true;
+    if (amount) { m.tails[betId] = amount; m.following = true; } else delete m.tails[betId];
     saveMine(m);
   }
 
   function showNotice(msg) { const n = $("#notice"); n.textContent = msg; n.hidden = false; }
 
-  for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { filter = b.dataset.f; renderSlips(); });
+  for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => { filter = b.dataset.f; renderSlips(); });
 
   // ---- boot -------------------------------------------------------------
   async function boot() {
@@ -477,17 +647,21 @@ textarea { resize: vertical; min-height: 64px; }
     if (!claude?.use) { renderAll(); return; }
     [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
     if (user) {
+      let isOwner;
       [myId, isAdmin, isOwner, canFollow] = await Promise.all([user.id(), user.canEdit(), user.isOwner(), user.can("data.write")]);
       isAdmin = isAdmin || isOwner;
     }
     if (!db) { renderAll(); return; }
-    if (!isAdmin && myId && canFollow === false) showNotice("You can view these picks, but following needs Contributor access. Ask the page owner to share it with you as a Contributor.");
+    if (!isAdmin && myId && canFollow === false) showNotice("You can view these bets, but following and tailing need Contributor access. Ask the page owner to share it with you as a Contributor.");
     if (!isAdmin && !myId) showNotice("Sign in to follow and tail bets.");
 
-    db.collection("bets").orderBy("postedAt", "desc").limit(500).onSnapshot((snap) => {
+    db.collection("bets").orderBy("postedAt", "desc").limit(1000).onSnapshot((snap) => {
       bets = snap.docs.map((d) => {
         const x = d.data() || {};
-        return { id: d.id, ...x, odds: Number(x.odds) || -110, units: Number(x.units) || 1, status: ["won", "lost", "push"].includes(x.status) ? x.status : "pending" };
+        const odds = parseOdds(x.odds) || -110;
+        const amount = Number(x.amount) > 0 ? Number(x.amount) : 0;
+        const status = ["won", "lost", "push"].includes(x.status) ? x.status : "pending";
+        return { ...x, id: d.id, league: String(x.league || x.sport || "Other"), odds, amount, status, profit: profitOf(status, odds, amount) };
       });
       renderAll();
     }, () => showNotice("Live updates stopped. Reload the page to reconnect."));
@@ -501,6 +675,7 @@ textarea { resize: vertical; min-height: 64px; }
     db.doc("meta/profile").onSnapshot((snap) => { meta = snap.exists ? snap.data() : {}; renderHeader(); }, () => {});
     renderAll();
   }
+  updateHints();
   renderAll();
   boot();
 })();
