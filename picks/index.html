@@ -1,0 +1,507 @@
+<title>Locked In Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one narrow column of printed bet slips under a scoreboard-style record strip */
+:root {
+  --paper: #eef2ee;
+  --card: #ffffff;
+  --ink: #15201b;
+  --muted: #5a6961;
+  --line: #d3dbd5;
+  --accent: #2343c4;
+  --accent-ink: #ffffff;
+  --won: #17784a;
+  --lost: #c1392b;
+  --push: #67727a;
+  --pending: #a86a12;
+  --tint: rgba(35, 67, 196, 0.08);
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1412; --card: #161e1b; --ink: #e6ede8; --muted: #93a39a; --line: #29332f;
+    --accent: #8ba2ff; --accent-ink: #0e1412; --won: #4cc283; --lost: #ff7d6c; --push: #9aa5ad;
+    --pending: #e3b45a; --tint: rgba(139, 162, 255, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1412; --card: #161e1b; --ink: #e6ede8; --muted: #93a39a; --line: #29332f;
+  --accent: #8ba2ff; --accent-ink: #0e1412; --won: #4cc283; --lost: #ff7d6c; --push: #9aa5ad;
+  --pending: #e3b45a; --tint: rgba(139, 162, 255, 0.12); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; padding: 32px 16px 64px; }
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 28px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.head { display: grid; gap: 16px; }
+.head-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+.who { min-width: 0; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 9vw, 64px); line-height: 0.95; margin: 4px 0 6px; text-transform: uppercase; letter-spacing: 0.01em; text-wrap: balance; overflow-wrap: anywhere; }
+.bio { margin: 0; color: var(--muted); max-width: 60ch; overflow-wrap: anywhere; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.btn { border: 1px solid var(--line); background: var(--card); padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 14px; }
+.btn:hover { border-color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.on { background: var(--tint); color: var(--accent); border-color: var(--accent); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn.danger { color: var(--lost); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 13px; }
+
+/* Record strip */
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--card); overflow: hidden; }
+.stat { padding: 12px 14px; display: grid; gap: 2px; border-left: 1px solid var(--line); }
+.stat:first-child { border-left: 0; }
+.stat .v { font-family: var(--mono); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat .k { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pos { color: var(--won); } .neg { color: var(--lost); }
+@media (max-width: 520px) {
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+.followers { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
+.faces { display: flex; }
+.faces img { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--paper); margin-left: -8px; background: var(--line); }
+.faces img:first-child { margin-left: 0; }
+
+.notice { font-size: 13px; color: var(--muted); background: var(--tint); border-radius: 6px; padding: 8px 12px; }
+
+/* Panels */
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 14px; }
+.panel h2 { font-family: var(--display); text-transform: uppercase; font-size: 24px; margin: 0; letter-spacing: 0.02em; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.grid .full { grid-column: 1 / -1; }
+@media (max-width: 520px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+label { display: grid; gap: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+input, select, textarea { text-transform: none; letter-spacing: normal; font-size: 15px; font-weight: 400; border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { resize: vertical; min-height: 64px; }
+.hint { font-size: 12px; color: var(--muted); font-family: var(--mono); text-transform: none; letter-spacing: 0; font-weight: 500; }
+.form-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.err { color: var(--lost); font-size: 13px; }
+
+/* Tabs */
+.bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card); }
+.tabs button { border: 0; background: none; padding: 6px 14px; font-weight: 600; font-size: 13px; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+.count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+/* Slips */
+.slips { display: grid; gap: 12px; }
+.slip { display: grid; grid-template-columns: 112px minmax(0, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.stub { border-right: 2px dashed var(--line); padding: 14px 12px; display: grid; align-content: center; gap: 2px; text-align: center; background: var(--tint); }
+.stub .odds { font-family: var(--mono); font-weight: 600; font-size: 24px; font-variant-numeric: tabular-nums; }
+.stub .imp, .stub .risk { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slip-body { padding: 14px 16px; display: grid; gap: 6px; min-width: 0; }
+.slip-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.meta { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; overflow-wrap: anywhere; }
+.pick { font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+.event { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.note { font-size: 14px; border-left: 2px solid var(--line); padding-left: 10px; margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chip { flex: none; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; border: 1px solid currentColor; font-family: var(--mono); }
+.chip.pending { color: var(--pending); } .chip.won { color: var(--won); } .chip.lost { color: var(--lost); } .chip.push { color: var(--push); }
+.slip.won .stub { background: color-mix(in srgb, var(--won) 10%, transparent); }
+.slip.lost .stub { background: color-mix(in srgb, var(--lost) 10%, transparent); }
+.slip-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.tailers { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.tailers .faces img { width: 22px; height: 22px; }
+.grade { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.result { font-family: var(--mono); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (max-width: 460px) {
+  .slip { grid-template-columns: minmax(0, 1fr); }
+  .stub { border-right: 0; border-bottom: 2px dashed var(--line); grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 12px; text-align: left; padding: 10px 16px; }
+  .stub .odds { font-size: 20px; }
+}
+
+.empty { text-align: center; padding: 40px 20px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); display: grid; gap: 6px; }
+.empty strong { font-family: var(--display); text-transform: uppercase; font-size: 22px; color: var(--ink); }
+.foot { font-size: 12px; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: no-preference) { .slip { transition: border-color 0.15s; } .slip:hover { border-color: var(--muted); } }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div class="head-top">
+      <div class="who">
+        <div class="eyebrow">Tracked picks · American odds · 1u = 1 unit</div>
+        <h1 id="handle">Locked In Picks</h1>
+        <p class="bio" id="bio">Every bet posted before the game, graded after. Follow to keep up and tail the ones you like.</p>
+      </div>
+      <div class="actions" id="head-actions"></div>
+    </div>
+    <div class="board" aria-label="Record">
+      <div class="stat"><span class="v" id="s-record">0-0-0</span><span class="k">W-L-P</span></div>
+      <div class="stat"><span class="v" id="s-units">0.00u</span><span class="k">Units</span></div>
+      <div class="stat"><span class="v" id="s-roi">—</span><span class="k">ROI</span></div>
+      <div class="stat"><span class="v" id="s-win">—</span><span class="k">Win rate</span></div>
+    </div>
+    <div class="followers" id="followers"></div>
+    <div class="notice" id="notice" hidden></div>
+  </header>
+
+  <section class="panel" id="profile-panel" hidden>
+    <h2>Edit profile</h2>
+    <form id="profile-form" class="grid">
+      <label class="full">Name shown at the top<input id="pf-handle" maxlength="40" placeholder="e.g. Jake's Locks"></label>
+      <label class="full">Short bio<textarea id="pf-bio" maxlength="200" placeholder="What you bet, how you size it"></textarea></label>
+      <div class="form-foot full"><button class="btn primary" type="submit">Save profile</button><button class="btn" type="button" id="pf-cancel">Cancel</button></div>
+    </form>
+  </section>
+
+  <section class="panel" id="post-panel" hidden>
+    <h2>Post a bet</h2>
+    <form id="post-form" class="grid" novalidate>
+      <label>Sport<select id="f-sport">
+        <option>NFL</option><option>NBA</option><option>MLB</option><option>NHL</option><option>NCAAF</option><option>NCAAB</option><option>Soccer</option><option>UFC</option><option>Tennis</option><option>Golf</option><option>Other</option>
+      </select></label>
+      <label>Bet type<select id="f-market">
+        <option>Spread</option><option>Moneyline</option><option>Total</option><option>Player prop</option><option>Parlay</option><option>Future</option><option>Other</option>
+      </select></label>
+      <label class="full">Your pick<input id="f-pick" maxlength="80" placeholder="Chiefs -3.5" required></label>
+      <label class="full">Game or event<input id="f-event" maxlength="100" placeholder="Bills @ Chiefs"></label>
+      <label>Odds <span class="hint" id="f-odds-hint">−110 → 52.4% implied</span><input id="f-odds" inputmode="numeric" placeholder="-110" value="-110"></label>
+      <label>Units risked<input id="f-units" inputmode="decimal" placeholder="1" value="1"></label>
+      <label class="full">Game time<input id="f-time" type="datetime-local"></label>
+      <label class="full">Why (optional)<textarea id="f-note" maxlength="500" placeholder="Short reasoning for your followers"></textarea></label>
+      <div class="form-foot full"><button class="btn primary" type="submit" id="f-submit">Post bet</button><span class="err" id="f-err"></span></div>
+    </form>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <div class="bar">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-open" data-f="open" aria-selected="true">Open</button>
+        <button role="tab" id="tab-settled" data-f="settled" aria-selected="false">Settled</button>
+        <button role="tab" id="tab-all" data-f="all" aria-selected="false">All</button>
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="slips" id="slips">
+      <div class="empty"><strong>Loading picks</strong><span>Open bets will show up here as soon as they're posted.</span></div>
+    </div>
+  </section>
+
+  <p class="foot">For entertainment. Bet responsibly. If gambling stops being fun, call 1-800-GAMBLER.</p>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const k of kids.flat()) if (k != null) el.append(k);
+    return el;
+  };
+
+  let db = null, user = null, myId = null, isAdmin = false, isOwner = false, canFollow = null;
+  let bets = [], fans = {}, meta = {}, filter = "open", confirmDelete = null;
+  let writing = false;
+
+  // ---- betting math -----------------------------------------------------
+  const parseOdds = (s) => {
+    const n = Number(String(s).replace(/[−–]/g, "-").replace(/\s/g, ""));
+    if (!Number.isFinite(n) || Math.abs(n) < 100) return null;
+    return Math.round(n);
+  };
+  const fmtOdds = (o) => (o > 0 ? "+" + o : "−" + Math.abs(o));
+  const implied = (o) => (o > 0 ? 100 / (o + 100) : -o / (-o + 100));
+  const toWin = (o, u) => (o > 0 ? u * o / 100 : u * 100 / -o);
+  const result = (b) => b.status === "won" ? toWin(b.odds, b.units) : b.status === "lost" ? -b.units : 0;
+  const fmtU = (u) => (u > 0 ? "+" : u < 0 ? "−" : "") + Math.abs(u).toFixed(2) + "u";
+
+  const fmtTime = (s) => {
+    if (!s) return "";
+    const d = new Date(s);
+    if (isNaN(d)) return "";
+    return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  };
+
+  // ---- rendering --------------------------------------------------------
+  function renderHeader() {
+    $("#handle").textContent = meta.handle || "Locked In Picks";
+    $("#bio").textContent = meta.bio || "Every bet posted before the game, graded after. Follow to keep up and tail the ones you like.";
+
+    const settled = bets.filter((b) => b.status !== "pending");
+    const w = settled.filter((b) => b.status === "won").length;
+    const l = settled.filter((b) => b.status === "lost").length;
+    const p = settled.filter((b) => b.status === "push").length;
+    const units = settled.reduce((a, b) => a + result(b), 0);
+    const risked = settled.filter((b) => b.status !== "push").reduce((a, b) => a + b.units, 0);
+    $("#s-record").textContent = `${w}-${l}-${p}`;
+    const su = $("#s-units"); su.textContent = fmtU(units); su.className = "v " + (units > 0 ? "pos" : units < 0 ? "neg" : "");
+    const roi = risked ? (units / risked) * 100 : null;
+    const sr = $("#s-roi"); sr.textContent = roi == null ? "—" : (roi > 0 ? "+" : "") + roi.toFixed(1) + "%"; sr.className = "v " + (roi > 0 ? "pos" : roi < 0 ? "neg" : "");
+    $("#s-win").textContent = w + l ? ((w / (w + l)) * 100).toFixed(1) + "%" : "—";
+
+    const acts = $("#head-actions"); acts.replaceChildren();
+    if (isAdmin) {
+      acts.append(
+        h("button", { class: "btn", type: "button", text: "Edit profile", onclick: openProfile }),
+        h("button", { class: "btn primary", type: "button", text: $("#post-panel").hidden ? "Post a bet" : "Close", onclick: togglePost }),
+      );
+    } else if (db && myId) {
+      const following = !!fans[myId]?.following;
+      acts.append(h("button", {
+        class: "btn " + (following ? "on" : "primary"), type: "button",
+        text: following ? "Following ✓" : "Follow", disabled: writing || canFollow === false,
+        "aria-pressed": following ? "true" : "false", onclick: toggleFollow,
+      }));
+    }
+  }
+
+  async function renderFollowers() {
+    const box = $("#followers");
+    const ids = Object.keys(fans).filter((id) => fans[id]?.following);
+    box.replaceChildren();
+    if (!db) return;
+    const label = h("span", { text: ids.length === 1 ? "1 follower" : `${ids.length} followers` });
+    if (!ids.length) { box.append(h("span", { text: isAdmin ? "No followers yet. Share this page so people can follow you." : "No followers yet. Be the first." })); return; }
+    const faces = h("div", { class: "faces" });
+    box.append(faces, label);
+    if (user) {
+      const shown = ids.slice(0, 8);
+      const ps = await user.profiles(shown);
+      for (const id of shown) faces.append(h("img", { src: ps[id].avatarUrl, alt: ps[id].name || "Follower", title: ps[id].name || "Follower" }));
+    }
+  }
+
+  async function renderSlips() {
+    const box = $("#slips");
+    for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.f === filter));
+    const list = bets.filter((b) => filter === "all" || (filter === "open" ? b.status === "pending" : b.status !== "pending"));
+    $("#count").textContent = list.length === 1 ? "1 bet" : `${list.length} bets`;
+
+    if (!db) {
+      box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: "Sign in to see picks" }), h("span", { text: "Picks are stored with this page and load once you're signed in to Claude." })));
+      return;
+    }
+    if (!list.length) {
+      const msg = !bets.length
+        ? (isAdmin ? ["No bets yet", "Use “Post a bet” above. Your followers see it right away."] : ["No picks posted yet", "Follow now and new bets will appear here as soon as they're posted."])
+        : filter === "open" ? ["No open bets", "Everything posted so far has been graded. Check the Settled tab."] : ["Nothing settled yet", "Bets show up here once they're graded won, lost or push."];
+      box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: msg[0] }), h("span", { text: msg[1] })));
+      return;
+    }
+
+    const tailIds = {};
+    for (const [uid, f] of Object.entries(fans)) for (const [bid, on] of Object.entries(f?.tails || {})) if (on) (tailIds[bid] ||= []).push(uid);
+    const allIds = [...new Set(Object.values(tailIds).flat())];
+    const ps = user && allIds.length ? await user.profiles(allIds) : {};
+
+    box.replaceChildren(...list.map((b) => slip(b, tailIds[b.id] || [], ps)));
+  }
+
+  function slip(b, tailers, ps) {
+    const st = b.status;
+    const label = { pending: "Open", won: "Won", lost: "Lost", push: "Push" }[st];
+    const res = result(b);
+
+    const foot = h("div", { class: "slip-foot" });
+    const tailBox = h("div", { class: "tailers" });
+    if (tailers.length) {
+      const faces = h("div", { class: "faces" });
+      for (const id of tailers.slice(0, 5)) faces.append(h("img", { src: ps[id]?.avatarUrl || "", alt: ps[id]?.name || "Someone", title: ps[id]?.name || "Someone" }));
+      tailBox.append(faces);
+    }
+    tailBox.append(h("span", { text: tailers.length ? `${tailers.length} tailing` : "No one tailing yet" }));
+    foot.append(tailBox);
+
+    const right = h("div", { class: "grade" });
+    if (st !== "pending") right.append(h("span", { class: "result " + (res > 0 ? "pos" : res < 0 ? "neg" : ""), text: fmtU(res) }));
+    if (isAdmin) {
+      if (confirmDelete === b.id) {
+        right.append(
+          h("span", { class: "err", text: "Delete this bet?" }),
+          h("button", { class: "btn small danger", type: "button", text: "Delete", onclick: () => removeBet(b.id) }),
+          h("button", { class: "btn small", type: "button", text: "Keep", onclick: () => { confirmDelete = null; renderSlips(); } }),
+        );
+      } else {
+        for (const s of ["won", "lost", "push", "pending"]) {
+          if (s === st) continue;
+          right.append(h("button", { class: "btn small", type: "button", text: s === "pending" ? "Reopen" : s[0].toUpperCase() + s.slice(1), onclick: () => grade(b.id, s) }));
+        }
+        right.append(h("button", { class: "link", type: "button", text: "Delete", onclick: () => { confirmDelete = b.id; renderSlips(); } }));
+      }
+    } else if (myId && st === "pending") {
+      const on = !!fans[myId]?.tails?.[b.id];
+      right.append(h("button", { class: "btn small " + (on ? "on" : ""), type: "button", text: on ? "Tailing ✓" : "Tail this", "aria-pressed": on ? "true" : "false", disabled: writing || canFollow === false, onclick: () => toggleTail(b.id) }));
+    }
+    foot.append(right);
+
+    const when = fmtTime(b.startsAt);
+    return h("article", { class: "slip " + st },
+      h("div", { class: "stub" },
+        h("span", { class: "odds", text: fmtOdds(b.odds) }),
+        h("span", { class: "risk", text: `${b.units}u to win ${toWin(b.odds, b.units).toFixed(2)}u` }),
+        h("span", { class: "imp", text: (implied(b.odds) * 100).toFixed(1) + "% implied" }),
+      ),
+      h("div", { class: "slip-body" },
+        h("div", { class: "slip-top" },
+          h("span", { class: "meta", text: [b.sport, b.market, when].filter(Boolean).join(" · ") }),
+          h("span", { class: "chip " + st, text: label }),
+        ),
+        h("div", { class: "pick", text: b.pick }),
+        b.event ? h("div", { class: "event", text: b.event }) : null,
+        b.note ? h("p", { class: "note", text: b.note }) : null,
+        foot,
+      ),
+    );
+  }
+
+  const renderAll = () => { renderHeader(); renderFollowers(); renderSlips(); };
+
+  // ---- owner actions ----------------------------------------------------
+  function togglePost() {
+    const p = $("#post-panel"); p.hidden = !p.hidden;
+    $("#profile-panel").hidden = true;
+    renderHeader();
+    if (!p.hidden) $("#f-pick").focus();
+  }
+  function openProfile() {
+    $("#pf-handle").value = meta.handle || "";
+    $("#pf-bio").value = meta.bio || "";
+    $("#profile-panel").hidden = false;
+    $("#post-panel").hidden = true;
+    renderHeader();
+    $("#pf-handle").focus();
+  }
+  $("#pf-cancel").addEventListener("click", () => { $("#profile-panel").hidden = true; });
+  $("#profile-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await db.doc("meta/profile").set({ handle: $("#pf-handle").value.trim(), bio: $("#pf-bio").value.trim() });
+      $("#profile-panel").hidden = true;
+    } catch (err) { showNotice("Couldn't save the profile. Try again in a moment."); }
+  });
+
+  const oddsInput = $("#f-odds");
+  oddsInput.addEventListener("input", () => {
+    const o = parseOdds(oddsInput.value);
+    $("#f-odds-hint").textContent = o ? `${fmtOdds(o)} → ${(implied(o) * 100).toFixed(1)}% implied` : "use American odds, e.g. -110 or +150";
+  });
+
+  $("#post-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("#f-err");
+    const pick = $("#f-pick").value.trim();
+    const odds = parseOdds(oddsInput.value);
+    const units = Number($("#f-units").value);
+    if (!pick) { err.textContent = "Add your pick, like “Chiefs -3.5”."; return; }
+    if (!odds) { err.textContent = "Odds need to be American odds of at least 100, like -110 or +150."; return; }
+    if (!(units > 0 && units <= 100)) { err.textContent = "Units must be a number between 0 and 100."; return; }
+    err.textContent = "";
+    const btn = $("#f-submit"); btn.disabled = true; btn.textContent = "Posting…";
+    try {
+      const t = $("#f-time").value;
+      await db.collection("bets").add({
+        sport: $("#f-sport").value, market: $("#f-market").value, pick,
+        event: $("#f-event").value.trim(), odds, units: Math.round(units * 100) / 100,
+        startsAt: t ? new Date(t).toISOString() : "", note: $("#f-note").value.trim(),
+        status: "pending", postedAt: new Date().toISOString(),
+      });
+      for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time"]) $(id).value = "";
+      filter = "open";
+      btn.textContent = "Posted";
+      setTimeout(() => { btn.textContent = "Post bet"; }, 1200);
+    } catch (e2) {
+      err.textContent = e2?.code === "quota_exceeded" ? "The board is full. Delete some old bets to post new ones." : "Couldn't post the bet. Try again.";
+      btn.textContent = "Post bet";
+    } finally { btn.disabled = false; }
+  });
+
+  async function grade(id, status) {
+    try { await db.doc("bets/" + id).update({ status, settledAt: status === "pending" ? "" : new Date().toISOString() }); }
+    catch { showNotice("Couldn't update that bet. Try again."); }
+  }
+  async function removeBet(id) {
+    confirmDelete = null;
+    try { await db.doc("bets/" + id).delete(); } catch { showNotice("Couldn't delete that bet. Try again."); }
+  }
+
+  // ---- follower actions -------------------------------------------------
+  async function saveMine(next) {
+    if (writing) return;
+    writing = true; renderAll();
+    try {
+      await db.doc("fans/" + myId).set(next);
+    } catch (e) {
+      if (e?.code === "invalid_argument") {
+        canFollow = false;
+        showNotice("You can view these picks, but following needs Contributor access. Ask the page owner to share it with you as a Contributor.");
+      } else showNotice("Couldn't save that. Try again in a moment.");
+    } finally { writing = false; renderAll(); }
+  }
+  function mine() {
+    const f = fans[myId] || {};
+    return { following: !!f.following, tails: { ...(f.tails || {}) }, since: f.since || new Date().toISOString() };
+  }
+  function toggleFollow() {
+    const m = mine(); m.following = !m.following;
+    if (m.following) m.since = new Date().toISOString();
+    saveMine(m);
+  }
+  function toggleTail(betId) {
+    const m = mine();
+    if (m.tails[betId]) delete m.tails[betId]; else m.tails[betId] = true;
+    if (!fans[myId]?.following && m.tails[betId]) m.following = true;
+    saveMine(m);
+  }
+
+  function showNotice(msg) { const n = $("#notice"); n.textContent = msg; n.hidden = false; }
+
+  for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { filter = b.dataset.f; renderSlips(); });
+
+  // ---- boot -------------------------------------------------------------
+  async function boot() {
+    const claude = window.claude;
+    if (!claude?.use) { renderAll(); return; }
+    [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (user) {
+      [myId, isAdmin, isOwner, canFollow] = await Promise.all([user.id(), user.canEdit(), user.isOwner(), user.can("data.write")]);
+      isAdmin = isAdmin || isOwner;
+    }
+    if (!db) { renderAll(); return; }
+    if (!isAdmin && myId && canFollow === false) showNotice("You can view these picks, but following needs Contributor access. Ask the page owner to share it with you as a Contributor.");
+    if (!isAdmin && !myId) showNotice("Sign in to follow and tail bets.");
+
+    db.collection("bets").orderBy("postedAt", "desc").limit(500).onSnapshot((snap) => {
+      bets = snap.docs.map((d) => {
+        const x = d.data() || {};
+        return { id: d.id, ...x, odds: Number(x.odds) || -110, units: Number(x.units) || 1, status: ["won", "lost", "push"].includes(x.status) ? x.status : "pending" };
+      });
+      renderAll();
+    }, () => showNotice("Live updates stopped. Reload the page to reconnect."));
+
+    db.collection("fans").limit(1000).onSnapshot((snap) => {
+      fans = {};
+      for (const d of snap.docs) fans[d.id] = d.data() || {};
+      renderAll();
+    }, () => {});
+
+    db.doc("meta/profile").onSnapshot((snap) => { meta = snap.exists ? snap.data() : {}; renderHeader(); }, () => {});
+    renderAll();
+  }
+  renderAll();
+  boot();
+})();
+</script>
