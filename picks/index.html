@@ -155,6 +155,23 @@ textarea { resize: vertical; min-height: 64px; }
 .prop-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 @media (max-width: 520px) { .prop-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .prop-who { grid-column: 1 / -1; } }
 optgroup { font-style: normal; font-weight: 700; }
+.pp { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.legs { display: grid; gap: 12px; }
+.legs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.leg-list { display: grid; gap: 12px; }
+.leg { border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 14px; background: var(--bg-2); display: grid; gap: 12px; }
+.leg-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.leg-head b { font-family: var(--display); font-weight: 900; font-size: 20px; text-transform: uppercase; letter-spacing: 0.04em; }
+.leg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.leg-grid .wide { grid-column: 1 / -1; }
+.leg-prop { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 560px) { .leg-prop { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .leg-prop > .pp { grid-column: 1 / -1; } }
+.add-leg { justify-self: start; border-style: dashed; color: var(--gold); }
+.legs-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.legs-list li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 7px 10px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.legs-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.legs-list .lg { font-family: var(--display); font-weight: 900; font-size: 13px; letter-spacing: 0.06em; color: var(--accent); margin-right: 8px; }
+.legs-list .lo { font-family: var(--mono); font-size: 13px; color: var(--gold); white-space: nowrap; }
 
 /* Screenshot import */
 .import { border: 2px dashed var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; background: var(--bg-2); }
@@ -293,11 +310,16 @@ optgroup { font-style: normal; font-weight: 700; }
       <label class="full" id="f-league-wrap" hidden>League name<input id="f-league" maxlength="20" placeholder="e.g. KBO, CFL, Euroleague"></label>
       <label class="full" id="f-detail-wrap" hidden><span id="f-detail-label">Type</span><select id="f-detail"></select></label>
       <div class="full prop-row" id="f-prop" hidden>
-        <label class="prop-who"><span id="f-player-label">Player</span><input id="f-player" maxlength="40" placeholder="Player name"></label>
+        <div class="prop-who" id="f-who"></div>
         <label>Over / Under<select id="f-side"><option>Over</option><option>Under</option><option>Yes</option><option>No</option></select></label>
         <label id="f-line-wrap">Line<input id="f-line" inputmode="decimal" maxlength="8" placeholder="e.g. 74.5"></label>
       </div>
-      <label class="full">Your pick <span class="hint" id="f-pick-hint"></span><input id="f-pick" maxlength="120" placeholder="Chiefs -3.5" required></label>
+      <div class="full legs" id="f-legs" hidden>
+        <div class="legs-head"><span class="eyebrow">Legs</span><span class="hint" id="f-legs-hint"></span></div>
+        <div class="leg-list" id="f-leg-list"></div>
+        <button class="btn small add-leg" type="button" id="f-add-leg">+ Add leg</button>
+      </div>
+      <label class="full" id="f-pick-wrap">Your pick <span class="hint" id="f-pick-hint"></span><input id="f-pick" maxlength="120" placeholder="Chiefs -3.5" required></label>
       <label class="full">Game or event<input id="f-event" maxlength="100" placeholder="Bills @ Chiefs"></label>
       <label>Odds <span class="hint" id="f-odds-hint">−110 → 52.4% implied</span><input id="f-odds" inputmode="numeric" placeholder="-110" value="-110"></label>
       <label>Amount ($) <span class="hint" id="f-amt-hint">to win $90.91</span><input id="f-amount" inputmode="decimal" placeholder="100" value="100"></label>
@@ -513,6 +535,7 @@ optgroup { font-style: normal; font-weight: 700; }
     box.replaceChildren(...list.map((b) => slip(b, tailIds[b.id] || [], ps)));
   }
 
+  const titleOf = (b) => (b.legs?.length ? `${b.legs.length}-leg ${b.market === "Teaser" ? "teaser" : b.market === "Same game parlay" ? "same game parlay" : "parlay"}` : b.pick);
   const slipText = (b) => `${b.league} · ${b.pick} ${fmtOdds(b.odds)}${b.event ? " · " + b.event : ""}${b.startsAt ? " · " + fmtTime(b.startsAt) : ""} · ${fmt$(b.amount)} (JMbets)`;
 
   function slip(b, tailers, ps) {
@@ -585,7 +608,10 @@ optgroup { font-style: normal; font-weight: 700; }
           h("span", { class: "meta", text: [b.market, b.detail, when].filter(Boolean).join(" · ") }),
           st === "pending" ? h("span", { class: "chip pending", text: "Open" }) : h("span", { class: "stamp", text: label }),
         ),
-        h("div", { class: "pick", text: b.pick }),
+        h("div", { class: "pick", text: titleOf(b) }),
+        b.legs?.length ? h("ul", { class: "legs-list" }, b.legs.map((l) => h("li", {},
+          h("span", {}, b.market === "Parlay" ? h("span", { class: "lg", text: l.league }) : null, l.pick || ""),
+          l.odds ? h("span", { class: "lo", text: fmtOdds(l.odds) }) : null))) : null,
         b.event ? h("div", { class: "event", text: b.event }) : null,
         money,
         b.note ? h("p", { class: "note", text: b.note }) : null,
@@ -617,8 +643,8 @@ optgroup { font-style: normal; font-weight: 700; }
     const open = bets.filter((b) => b.status === "pending").slice(0, 12);
     const recent = bets.filter((b) => b.status !== "pending").sort(byTimeAsc).reverse().slice(0, 6);
     const items = [
-      ...open.map((b) => h("span", {}, h("b", { class: "tl", text: b.league }), h("b", { text: b.pick }), h("i", { text: fmtOdds(b.odds) }), document.createTextNode(fmt$(b.amount)))),
-      ...recent.map((b) => h("span", {}, h("b", { class: "tl", text: b.league }), document.createTextNode(b.pick), h("b", { class: cls(b.profit), text: `${b.status.toUpperCase()} ${fmtP(b.profit)}` }))),
+      ...open.map((b) => h("span", {}, h("b", { class: "tl", text: b.league }), h("b", { text: titleOf(b) }), h("i", { text: fmtOdds(b.odds) }), document.createTextNode(fmt$(b.amount)))),
+      ...recent.map((b) => h("span", {}, h("b", { class: "tl", text: b.league }), document.createTextNode(titleOf(b)), h("b", { class: cls(b.profit), text: `${b.status.toUpperCase()} ${fmtP(b.profit)}` }))),
     ];
     if (!items.length) items.push(h("span", {}, h("b", { class: "tl", text: "JMBETS" }), document.createTextNode("New bets show up here the moment they're posted")));
     const s = summarize(bets);
@@ -892,10 +918,13 @@ optgroup { font-style: normal; font-weight: 700; }
     const who = PERSON_MARKETS[m];
     $("#f-prop").hidden = !who;
     if (who) {
-      $("#f-player-label").textContent = who;
-      $("#f-player").placeholder = who === "Team" ? "Team name" : who + " name";
+      mainWho.context(mainLeagueKey(), m, $("#f-detail").value);
       if (keep == null) $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over";
     }
+    const par = isParlay(m);
+    $("#f-legs").hidden = !par;
+    $("#f-pick-wrap").hidden = par;
+    if (par) { if (!legs.length) setLegs([]); else legs.forEach((l) => l.refresh()); legsChanged(); }
     refreshProp();
   }
   function refreshProp() {
@@ -909,15 +938,12 @@ optgroup { font-style: normal; font-weight: 700; }
   function composePick() {
     const m = $("#f-market").value;
     if (pickTouched || !PERSON_MARKETS[m]) return;
-    const who = $("#f-player").value.trim(), side = $("#f-side").value, line = $("#f-line").value.trim(), stat = $("#f-detail").value;
-    if (!who) { $("#f-pick").value = ""; return; }
-    $("#f-pick").value = side === "Yes" ? `${who} ${stat}` : side === "No" ? `${who} No ${stat}` : `${who} ${side}${line ? " " + line : ""} ${stat}`;
+    $("#f-pick").value = buildPick(mainWho.value(), $("#f-side").value, $("#f-line").value.trim(), $("#f-detail").value);
   }
   leagueSel.addEventListener("change", () => { $("#f-league-wrap").hidden = leagueSel.value !== "__other"; refreshMarkets(); if (!$("#f-league-wrap").hidden) $("#f-league").focus(); });
   $("#f-market").addEventListener("change", () => refreshDetail());
-  $("#f-detail").addEventListener("change", () => { if (PERSON_MARKETS[$("#f-market").value]) $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over"; refreshProp(); });
+  $("#f-detail").addEventListener("change", () => { if (PERSON_MARKETS[$("#f-market").value]) { $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over"; mainWho.context(mainLeagueKey(), $("#f-market").value, $("#f-detail").value); } refreshProp(); });
   $("#f-side").addEventListener("change", refreshProp);
-  $("#f-player").addEventListener("input", composePick);
   $("#f-line").addEventListener("input", composePick);
   $("#f-pick").addEventListener("input", () => { pickTouched = $("#f-pick").value.trim() !== ""; $("#f-pick-hint").textContent = ""; });
 
@@ -925,7 +951,7 @@ optgroup { font-style: normal; font-weight: 700; }
     const m = $("#f-market").value;
     const out = { market: m, detail: $("#f-detail-wrap").hidden ? "" : $("#f-detail").value, player: "", side: "", line: "" };
     if (PERSON_MARKETS[m]) {
-      out.player = $("#f-player").value.trim();
+      out.player = mainWho.value();
       out.side = $("#f-side").value;
       out.line = $("#f-line-wrap").hidden ? "" : $("#f-line").value.trim();
     }
@@ -935,7 +961,8 @@ optgroup { font-style: normal; font-weight: 700; }
     setLeague(x.league || "NFL");
     refreshMarkets(x.market || undefined);
     refreshDetail(x.detail || undefined);
-    $("#f-player").value = x.player || "";
+    if (PERSON_MARKETS[$("#f-market").value]) mainWho.set(x.player || "");
+    if (isParlay($("#f-market").value)) setLegs(Array.isArray(x.legs) ? x.legs : []);
     if (["Over", "Under", "Yes", "No"].includes(x.side)) $("#f-side").value = x.side;
     $("#f-line").value = x.line != null && x.line !== "" ? String(x.line) : "";
     pickTouched = !!pickFromData;
@@ -947,6 +974,228 @@ optgroup { font-style: normal; font-weight: 700; }
     return `${sport} (${leagues}): ` + Object.entries(mk).map(([m, d]) => Array.isArray(d) ? `${m} [${d.join(" | ")}]` : d === F ? `${m} [futures market, e.g. ${(FUTURES[leagues.split(", ")[0]] || OTHER_FUT).slice(0, 3).join(" | ")}]` : m).join("; ");
   }).join("\n");
 
+  // ---- NFL teams and key players (team → player picker) -------------------
+  // Skill-position starters and regulars by team. Rosters change; "Type a name…" covers anyone missing.
+  const NFL_TEAMS = [
+    ["Cardinals", "Arizona Cardinals", "QB Kyler Murray|RB James Conner|RB Trey Benson|WR Marvin Harrison Jr.|WR Michael Wilson|TE Trey McBride"],
+    ["Falcons", "Atlanta Falcons", "QB Michael Penix Jr.|QB Kirk Cousins|RB Bijan Robinson|RB Tyler Allgeier|WR Drake London|WR Darnell Mooney|TE Kyle Pitts"],
+    ["Ravens", "Baltimore Ravens", "QB Lamar Jackson|RB Derrick Henry|RB Justice Hill|WR Zay Flowers|WR Rashod Bateman|WR DeAndre Hopkins|TE Mark Andrews|TE Isaiah Likely"],
+    ["Bills", "Buffalo Bills", "QB Josh Allen|RB James Cook|RB Ray Davis|WR Khalil Shakir|WR Keon Coleman|WR Joshua Palmer|TE Dalton Kincaid|TE Dawson Knox"],
+    ["Panthers", "Carolina Panthers", "QB Bryce Young|RB Chuba Hubbard|RB Rico Dowdle|WR Tetairoa McMillan|WR Xavier Legette|WR Jalen Coker|TE Tommy Tremble"],
+    ["Bears", "Chicago Bears", "QB Caleb Williams|RB D'Andre Swift|WR DJ Moore|WR Rome Odunze|WR Luther Burden III|TE Colston Loveland|TE Cole Kmet"],
+    ["Bengals", "Cincinnati Bengals", "QB Joe Burrow|QB Joe Flacco|RB Chase Brown|WR Ja'Marr Chase|WR Tee Higgins|WR Andrei Iosivas|TE Mike Gesicki|TE Noah Fant"],
+    ["Browns", "Cleveland Browns", "QB Shedeur Sanders|QB Dillon Gabriel|QB Deshaun Watson|RB Quinshon Judkins|WR Jerry Jeudy|WR Cedric Tillman|TE David Njoku|TE Harold Fannin Jr."],
+    ["Cowboys", "Dallas Cowboys", "QB Dak Prescott|RB Javonte Williams|RB Jaydon Blue|WR CeeDee Lamb|WR George Pickens|WR KaVontae Turpin|TE Jake Ferguson"],
+    ["Broncos", "Denver Broncos", "QB Bo Nix|RB RJ Harvey|RB J.K. Dobbins|WR Courtland Sutton|WR Troy Franklin|WR Marvin Mims Jr.|TE Evan Engram"],
+    ["Lions", "Detroit Lions", "QB Jared Goff|RB Jahmyr Gibbs|RB David Montgomery|WR Amon-Ra St. Brown|WR Jameson Williams|WR Isaac TeSlaa|TE Sam LaPorta"],
+    ["Packers", "Green Bay Packers", "QB Jordan Love|RB Josh Jacobs|WR Jayden Reed|WR Romeo Doubs|WR Christian Watson|WR Matthew Golden|TE Tucker Kraft"],
+    ["Texans", "Houston Texans", "QB C.J. Stroud|RB Joe Mixon|RB Woody Marks|RB Nick Chubb|WR Nico Collins|WR Christian Kirk|WR Jayden Higgins|TE Dalton Schultz"],
+    ["Colts", "Indianapolis Colts", "QB Daniel Jones|QB Anthony Richardson|RB Jonathan Taylor|WR Michael Pittman Jr.|WR Josh Downs|WR Alec Pierce|TE Tyler Warren"],
+    ["Jaguars", "Jacksonville Jaguars", "QB Trevor Lawrence|RB Travis Etienne Jr.|RB Bhayshul Tuten|WR Brian Thomas Jr.|WR Travis Hunter|WR Jakobi Meyers|TE Brenton Strange"],
+    ["Chiefs", "Kansas City Chiefs", "QB Patrick Mahomes|RB Isiah Pacheco|RB Kareem Hunt|WR Rashee Rice|WR Xavier Worthy|WR Hollywood Brown|TE Travis Kelce"],
+    ["Raiders", "Las Vegas Raiders", "QB Geno Smith|RB Ashton Jeanty|RB Raheem Mostert|WR Tre Tucker|WR Jack Bech|TE Brock Bowers"],
+    ["Chargers", "Los Angeles Chargers", "QB Justin Herbert|RB Omarion Hampton|RB Najee Harris|WR Ladd McConkey|WR Quentin Johnston|WR Keenan Allen|TE Oronde Gadsden II"],
+    ["Rams", "Los Angeles Rams", "QB Matthew Stafford|RB Kyren Williams|RB Blake Corum|WR Puka Nacua|WR Davante Adams|WR Tutu Atwell|TE Colby Parkinson"],
+    ["Dolphins", "Miami Dolphins", "QB Tua Tagovailoa|RB De'Von Achane|WR Jaylen Waddle|WR Malik Washington|TE Darren Waller"],
+    ["Vikings", "Minnesota Vikings", "QB J.J. McCarthy|QB Carson Wentz|RB Aaron Jones|RB Jordan Mason|WR Justin Jefferson|WR Jordan Addison|WR Adam Thielen|TE T.J. Hockenson"],
+    ["Patriots", "New England Patriots", "QB Drake Maye|RB TreVeyon Henderson|RB Rhamondre Stevenson|WR Stefon Diggs|WR Kayshon Boutte|WR DeMario Douglas|TE Hunter Henry"],
+    ["Saints", "New Orleans Saints", "QB Tyler Shough|QB Spencer Rattler|RB Alvin Kamara|RB Kendre Miller|WR Chris Olave|TE Juwan Johnson"],
+    ["Giants", "New York Giants", "QB Jaxson Dart|QB Russell Wilson|RB Cam Skattebo|RB Tyrone Tracy Jr.|WR Malik Nabers|WR Wan'Dale Robinson|TE Theo Johnson"],
+    ["Jets", "New York Jets", "QB Justin Fields|QB Tyrod Taylor|RB Breece Hall|RB Braelon Allen|WR Garrett Wilson|TE Mason Taylor"],
+    ["Eagles", "Philadelphia Eagles", "QB Jalen Hurts|RB Saquon Barkley|WR A.J. Brown|WR DeVonta Smith|TE Dallas Goedert"],
+    ["Steelers", "Pittsburgh Steelers", "QB Aaron Rodgers|RB Jaylen Warren|RB Kenneth Gainwell|WR DK Metcalf|WR Calvin Austin III|TE Pat Freiermuth|TE Jonnu Smith"],
+    ["49ers", "San Francisco 49ers", "QB Brock Purdy|QB Mac Jones|RB Christian McCaffrey|WR Brandon Aiyuk|WR Jauan Jennings|WR Ricky Pearsall|TE George Kittle"],
+    ["Seahawks", "Seattle Seahawks", "QB Sam Darnold|RB Kenneth Walker III|RB Zach Charbonnet|WR Jaxon Smith-Njigba|WR Cooper Kupp|WR Rashid Shaheed|TE AJ Barner"],
+    ["Buccaneers", "Tampa Bay Buccaneers", "QB Baker Mayfield|RB Bucky Irving|RB Rachaad White|WR Mike Evans|WR Chris Godwin|WR Emeka Egbuka|TE Cade Otton"],
+    ["Titans", "Tennessee Titans", "QB Cam Ward|RB Tony Pollard|RB Tyjae Spears|WR Calvin Ridley|WR Elic Ayomanor|TE Chig Okonkwo"],
+    ["Commanders", "Washington Commanders", "QB Jayden Daniels|QB Marcus Mariota|RB Jacory Croskey-Merritt|RB Austin Ekeler|WR Terry McLaurin|WR Deebo Samuel|TE Zach Ertz"],
+  ];
+  const NFL_ROSTER = Object.fromEntries(NFL_TEAMS.map(([k, , r]) => [k, r.split("|").map((x) => ({ pos: x.slice(0, 2).trim(), name: x.slice(3) }))]));
+  const posFor = (stat) => {
+    const s = String(stat || "").toLowerCase();
+    if (/rush \+ rec/.test(s)) return ["RB", "WR", "TE"];
+    if (/pass|interceptions thrown|completion/.test(s)) return ["QB"];
+    if (/rush/.test(s)) return ["RB", "QB"];
+    if (/receiv|reception/.test(s)) return ["WR", "TE", "RB"];
+    if (/td/.test(s)) return ["RB", "WR", "TE", "QB"];
+    return [];
+  };
+
+  // Team → player picker. NFL gets dropdowns; other leagues get a text box.
+  function personPicker(onChange) {
+    const teamSel = h("select", { "aria-label": "Team" }, h("option", { value: "", text: "Pick a team" }), NFL_TEAMS.map(([k, full]) => h("option", { value: k, text: full })));
+    const playerSel = h("select", { "aria-label": "Player" });
+    const text = h("input", { maxlength: 40 });
+    const textSpan = h("span", { text: "Player" });
+    const teamLab = h("label", {}, "Team", teamSel);
+    const playerLab = h("label", {}, "Player", playerSel);
+    const textLab = h("label", {}, textSpan, text);
+    const el = h("div", { class: "pp" }, teamLab, playerLab, textLab);
+    let kind = "Player", nfl = false, stat = "";
+    const useTeams = () => nfl && (kind === "Player" || kind === "Team");
+    function fillPlayers(keep) {
+      const roster = [...(NFL_ROSTER[teamSel.value] || [])];
+      const pref = posFor(stat);
+      const rank = (p) => (pref.includes(p.pos) ? pref.indexOf(p.pos) : 9);
+      roster.sort((a, b) => rank(a) - rank(b));
+      playerSel.replaceChildren(h("option", { value: "", text: "Pick a player" }), ...roster.map((p) => h("option", { value: p.name, text: `${p.name} (${p.pos})` })), h("option", { value: "__type", text: "Type a name…" }));
+      playerSel.value = keep && [...playerSel.options].some((o) => o.value === keep) ? keep : keep === "__type" ? "__type" : "";
+    }
+    function layout() {
+      const t = useTeams();
+      teamLab.hidden = !t;
+      playerLab.hidden = !(t && kind === "Player" && teamSel.value);
+      textLab.hidden = !(!t || (kind === "Player" && (!teamSel.value || playerSel.value === "__type")));
+      textSpan.textContent = t && kind === "Player" && teamSel.value ? "Player name" : kind;
+      text.placeholder = kind === "Team" ? "Team name" : kind + " name";
+    }
+    function value() {
+      if (useTeams() && kind === "Team") return teamSel.value;
+      if (useTeams() && kind === "Player" && teamSel.value && playerSel.value && playerSel.value !== "__type") return playerSel.value;
+      return text.value.trim();
+    }
+    function set(v) {
+      v = String(v || "").trim();
+      text.value = ""; teamSel.value = ""; 
+      if (useTeams() && v) {
+        const lc = v.toLowerCase();
+        if (kind === "Team") {
+          const t = NFL_TEAMS.find(([k, full]) => k.toLowerCase() === lc || full.toLowerCase() === lc);
+          if (t) teamSel.value = t[0]; else text.value = v;
+        } else {
+          const t = NFL_TEAMS.find(([k]) => NFL_ROSTER[k].some((p) => p.name.toLowerCase() === lc));
+          if (t) { teamSel.value = t[0]; fillPlayers(NFL_ROSTER[t[0]].find((p) => p.name.toLowerCase() === lc).name); }
+          else text.value = v;
+        }
+      } else text.value = v;
+      if (!teamSel.value) fillPlayers("");
+      layout();
+    }
+    function context(league, market, st) {
+      const cur = value();
+      nfl = league === "NFL"; kind = PERSON_MARKETS[market] || "Player"; stat = st || "";
+      const keepTeam = teamSel.value, keepPlayer = playerSel.value;
+      if (useTeams() && keepTeam) { fillPlayers(keepPlayer); layout(); }
+      else set(cur);
+    }
+    teamSel.addEventListener("change", () => { fillPlayers(""); layout(); onChange(); if (kind === "Player" && teamSel.value) playerSel.focus(); });
+    playerSel.addEventListener("change", () => { layout(); onChange(); if (playerSel.value === "__type") text.focus(); });
+    text.addEventListener("input", onChange);
+    return { el, value, set, context, clear: () => set("") };
+  }
+  const buildPick = (who, side, line, stat) =>
+    !who ? "" : side === "Yes" ? `${who} ${stat}` : side === "No" ? `${who} No ${stat}` : `${who} ${side}${line ? " " + line : ""} ${stat}`;
+
+  // ---- parlay legs ----------------------------------------------------------
+  const PARLAY_MARKETS = ["Parlay", "Same game parlay", "Teaser"];
+  const isParlay = (m) => PARLAY_MARKETS.includes(m);
+  const legsShareLeague = () => $("#f-market").value !== "Parlay"; // same game parlays and teasers stay in one league
+  const mainLeagueKey = () => (leagueSel.value === "__other" ? "__other" : leagueSel.value);
+  const legMarkets = (league) => Object.keys(marketsFor(league)).filter((m) => !isParlay(m));
+  const toDec = (o) => (o > 0 ? 1 + o / 100 : 1 + 100 / -o);
+  const toAmerican = (d) => (d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1)));
+  let legs = [], oddsTouched = false;
+
+  function makeLeg(data = {}) {
+    const lg = h("select", { "aria-label": "Leg league" }, ...LEAGUE_GROUPS.map(([g, ls]) => h("optgroup", { label: g }, ls.map((l) => h("option", { value: l, text: l })))), h("option", { value: "__other", text: "Other" }));
+    const mk = h("select"), dt = h("select"), dtSpan = h("span", { text: "Type" });
+    const side = h("select", {}, ["Over", "Under", "Yes", "No"].map((v) => h("option", { value: v, text: v })));
+    const line = h("input", { inputmode: "decimal", maxlength: 8, placeholder: "e.g. 74.5" });
+    const pick = h("input", { maxlength: 120 });
+    const odds = h("input", { inputmode: "numeric", placeholder: "-110" });
+    let touched = false;
+    const who = personPicker(() => compose());
+    const lgLab = h("label", {}, "League", lg);
+    const mkLab = h("label", {}, "Bet type", mk);
+    const dtLab = h("label", {}, dtSpan, dt);
+    const sideLab = h("label", {}, "Over / Under", side);
+    const lineLab = h("label", {}, "Line", line);
+    const propBox = h("div", { class: "wide leg-prop" }, who.el, sideLab, lineLab);
+    const pickLab = h("label", { class: "wide" }, "Pick", pick);
+    const oddsLab = h("label", {}, "Leg odds (optional)", odds);
+    const title = h("b", { text: "Leg" });
+    const rm = h("button", { class: "link", type: "button", text: "Remove" });
+    const el = h("div", { class: "leg" }, h("div", { class: "leg-head" }, title, rm), h("div", { class: "leg-grid" }, lgLab, mkLab, dtLab, propBox, pickLab, oddsLab));
+    const L = () => (legsShareLeague() ? mainLeagueKey() : lg.value);
+
+    function refresh(keepMk, keepDt) {
+      lgLab.hidden = legsShareLeague();
+      selectFill(mk, legMarkets(L()), keepMk);
+      refreshD(keepDt);
+    }
+    function refreshD(keepDt) {
+      const list = detailsFor(L(), mk.value);
+      dtLab.hidden = !list;
+      if (list) { dtSpan.textContent = DETAIL_LABEL[mk.value] || "Type"; selectFill(dt, list, keepDt); }
+      const k = PERSON_MARKETS[mk.value];
+      propBox.hidden = !k;
+      if (k) { who.context(L(), mk.value, dt.value); if (keepDt == null) side.value = YES_NO.test(dt.value) ? "Yes" : "Over"; }
+      refreshP();
+    }
+    function refreshP() {
+      lineLab.hidden = side.value === "Yes" || side.value === "No";
+      pick.placeholder = PICK_EXAMPLE[mk.value] || (PERSON_MARKETS[mk.value] ? "Filled in from the fields above" : "Describe this leg");
+      compose();
+    }
+    function compose() {
+      if (!touched && PERSON_MARKETS[mk.value]) pick.value = buildPick(who.value(), side.value, line.value.trim(), dt.value);
+      legsChanged();
+    }
+    lg.addEventListener("change", () => refresh());
+    mk.addEventListener("change", () => refreshD());
+    dt.addEventListener("change", () => { if (PERSON_MARKETS[mk.value]) side.value = YES_NO.test(dt.value) ? "Yes" : "Over"; refreshP(); });
+    side.addEventListener("change", refreshP);
+    line.addEventListener("input", compose);
+    pick.addEventListener("input", () => { touched = pick.value.trim() !== ""; legsChanged(); });
+    odds.addEventListener("input", legsChanged);
+    rm.addEventListener("click", () => { legs = legs.filter((x) => x !== api); el.remove(); renumber(); legsChanged(); });
+
+    const api = {
+      el, refresh: () => refresh(mk.value, dt.value),
+      setTitle: (t) => { title.textContent = t; rm.hidden = legs.length <= 2; },
+      read: () => {
+        const m = mk.value, k = PERSON_MARKETS[m];
+        return {
+          league: legsShareLeague() ? getLeague() : (lg.value === "__other" ? "Other" : lg.value),
+          market: m, detail: dtLab.hidden ? "" : dt.value,
+          player: k ? who.value() : "", side: k ? side.value : "", line: k && !lineLab.hidden ? line.value.trim() : "",
+          pick: pick.value.trim(), odds: parseOdds(odds.value),
+        };
+      },
+    };
+    // initial values
+    const dl = String(data.league || "");
+    lg.value = Object.keys(SPORT_OF).find((l) => l.toLowerCase() === dl.toLowerCase()) || (dl ? "__other" : (mainLeagueKey() === "__other" ? "__other" : mainLeagueKey()));
+    refresh(data.market || undefined, data.detail || undefined);
+    if (PERSON_MARKETS[mk.value]) {
+      who.context(L(), mk.value, dt.value);
+      who.set(data.player || "");
+      if (["Over", "Under", "Yes", "No"].includes(data.side)) side.value = data.side;
+      line.value = data.line != null ? String(data.line) : "";
+    }
+    if (data.odds != null && parseOdds(data.odds)) odds.value = String(parseOdds(data.odds));
+    touched = !!data.pick;
+    refreshP();
+    if (data.pick) pick.value = String(data.pick).slice(0, 120);
+    return api;
+  }
+  function renumber() { legs.forEach((l, i) => l.setTitle(`Leg ${i + 1}`)); }
+  function addLeg(data) { const l = makeLeg(data); legs.push(l); $("#f-leg-list").append(l.el); renumber(); legsChanged(); return l; }
+  function setLegs(list) { legs = []; $("#f-leg-list").replaceChildren(); for (const d of list) addLeg(d); while (legs.length < 2) addLeg({}); }
+  function legsChanged() {
+    const read = legs.map((l) => l.read());
+    const withOdds = read.filter((l) => l.odds);
+    const hint = $("#f-legs-hint");
+    if (read.length && withOdds.length === read.length) {
+      const combo = toAmerican(read.reduce((d, l) => d * toDec(l.odds), 1));
+      hint.textContent = `${read.length} legs combine to ${fmtOdds(combo)}`;
+      if (!oddsTouched && $("#f-market").value !== "Teaser") { $("#f-odds").value = String(combo); updateHints(); }
+    } else hint.textContent = read.length ? `${read.length} legs · add leg odds to total them up, or enter the parlay odds below` : "";
+  }
+  const mainWho = personPicker(() => composePick());
+  $("#f-who").append(mainWho.el);
+  $("#f-add-leg").addEventListener("click", () => { const l = addLeg({}); l.el.querySelector("select:not([hidden]), input")?.focus(); });
+
   // ---- owner actions ----------------------------------------------------
   function setFormStatus(s) {
     formStatus = s;
@@ -956,8 +1205,10 @@ optgroup { font-style: normal; font-weight: 700; }
 
   function resetForm() {
     editing = null;
-    for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time", "#f-player", "#f-line"]) $(id).value = "";
-    pickTouched = false;
+    for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time", "#f-line"]) $(id).value = "";
+    mainWho.clear();
+    pickTouched = false; oddsTouched = false;
+    legs = []; $("#f-leg-list").replaceChildren();
     refreshDetail();
     setFormStatus("pending");
     $("#post-title").textContent = "Post a bet";
@@ -978,7 +1229,8 @@ optgroup { font-style: normal; font-weight: 700; }
   }
   function startEdit(b) {
     editing = b.id;
-    writeBetType(b, b.pick);
+    writeBetType(b, b.legs?.length ? "" : b.pick);
+    oddsTouched = true;
     $("#f-event").value = b.event || "";
     $("#f-odds").value = String(b.odds); $("#f-amount").value = String(b.amount);
     $("#f-time").value = toLocalInput(b.startsAt); $("#f-note").value = b.note || "";
@@ -1015,17 +1267,21 @@ optgroup { font-style: normal; font-weight: 700; }
     $("#f-odds-hint").textContent = o ? `${fmtOdds(o)} → ${(implied(o) * 100).toFixed(1)}% implied` : "American odds, e.g. -110 or +150";
     $("#f-amt-hint").textContent = o && a ? `to win ${fmt$(toWin(o, a))}` : "";
   }
-  $("#f-odds").addEventListener("input", updateHints);
+  $("#f-odds").addEventListener("input", () => { oddsTouched = true; updateHints(); });
   $("#f-amount").addEventListener("input", updateHints);
 
   $("#post-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const err = $("#f-err");
     const league = getLeague();
-    const pick = $("#f-pick").value.trim();
+    const par = isParlay($("#f-market").value);
+    const legData = par ? legs.map((l) => l.read()) : [];
+    const pick = par ? legData.map((l) => l.pick).join(" + ") : $("#f-pick").value.trim();
     const odds = parseOdds($("#f-odds").value);
     const amount = parseMoney($("#f-amount").value);
     if (!league) { err.textContent = "Add the league, like NFL or NBA."; return; }
+    if (par && legData.length < 2) { err.textContent = "A parlay needs at least 2 legs."; return; }
+    if (par && legData.some((l) => !l.pick)) { err.textContent = `Fill in the pick for leg ${legData.findIndex((l) => !l.pick) + 1}.`; return; }
     if (!pick) { err.textContent = PERSON_MARKETS[$("#f-market").value] ? "Add the name above, or type your pick." : "Add your pick, like “Chiefs -3.5”."; return; }
     if (!odds) { err.textContent = "Odds need to be American odds of at least 100, like -110 or +150."; return; }
     if (!amount) { err.textContent = "Enter the amount you bet in dollars, like 50."; return; }
@@ -1033,7 +1289,7 @@ optgroup { font-style: normal; font-weight: 700; }
     const btn = $("#f-submit"); btn.disabled = true;
     const t = $("#f-time").value;
     const body = {
-      league, ...readBetType(), pick, event: $("#f-event").value.trim(), odds, amount,
+      league, ...readBetType(), pick: pick.slice(0, 600), legs: legData, event: $("#f-event").value.trim(), odds, amount,
       startsAt: t ? new Date(t).toISOString() : "", note: $("#f-note").value.trim(), status: formStatus,
       settledAt: formStatus === "pending" ? "" : new Date().toISOString(),
     };
@@ -1113,6 +1369,7 @@ Extract every distinct bet. Reply with only a JSON array; each item:
  "player": for Player/Fighter/Team props, the player, fighter or team name, else "",
  "side": for props, "Over", "Under", "Yes" or "No", else "",
  "line": for over/under props, the number as a string like "74.5", else "",
+ "legs": for a parlay, same game parlay or teaser, an array of legs, each {"league","market","detail","player","side","line","pick","odds" (the leg's American odds if shown, else null)} using the same rules; else [],
  "pick": string (what was bet, short, e.g. "Chiefs -3.5", "Over 47.5", "Jalen Brunson 25+ pts"; for a parlay or same game parlay list the legs separated by " + "),
  "event": string (the matchup, e.g. "Bills @ Chiefs", or ""),
  "odds": integer American odds of the whole bet (e.g. -110, 250),
@@ -1131,7 +1388,13 @@ Example: [{"league":"NFL","market":"Player prop","detail":"Rushing yards","playe
     const market = mk.find((m) => m.toLowerCase() === String(x.market || "").toLowerCase()) || "Other";
     const dl = detailsFor(SPORT_OF[lg] ? lg : "__other", market) || [];
     const detail = dl.find((d) => d.toLowerCase() === String(x.detail || "").toLowerCase()) || (x.detail ? String(x.detail).slice(0, 40) : "");
-    writeBetType({ league: lg, market, detail, player: String(x.player || "").slice(0, 40), side: x.side, line: x.line == null ? "" : String(x.line).slice(0, 8) }, x.pick || "");
+    const legsIn = Array.isArray(x.legs) ? x.legs.filter((l) => l && typeof l === "object").slice(0, 15).map((l) => {
+      const ll = String(l.league || lg).slice(0, 20), key = SPORT_OF[ll] ? ll : "__other";
+      const lm = legMarkets(key).find((m) => m.toLowerCase() === String(l.market || "").toLowerCase()) || "Other";
+      const ld = (detailsFor(key, lm) || []).find((d) => d.toLowerCase() === String(l.detail || "").toLowerCase()) || (l.detail ? String(l.detail).slice(0, 40) : "");
+      return { league: ll, market: lm, detail: ld, player: String(l.player || "").slice(0, 40), side: l.side, line: l.line == null ? "" : String(l.line).slice(0, 8), pick: String(l.pick || "").slice(0, 120), odds: l.odds };
+    }) : [];
+    writeBetType({ league: lg, market, detail, player: String(x.player || "").slice(0, 40), side: x.side, line: x.line == null ? "" : String(x.line).slice(0, 8), legs: legsIn }, isParlay(market) ? "" : (x.pick || ""));
     $("#f-event").value = String(x.event || "").slice(0, 100);
     if (parseOdds(x.odds)) $("#f-odds").value = String(parseOdds(x.odds));
     if (parseMoney(x.amount)) $("#f-amount").value = String(parseMoney(x.amount));
@@ -1284,7 +1547,8 @@ Example: [{"league":"NFL","market":"Player prop","detail":"Rushing yards","playe
         const odds = parseOdds(x.odds) || -110;
         const amount = Number(x.amount) > 0 ? Number(x.amount) : 0;
         const status = ["won", "lost", "push"].includes(x.status) ? x.status : "pending";
-        return { ...x, id: d.id, league: String(x.league || x.sport || "Other"), odds, amount, status, profit: profitOf(status, odds, amount) };
+        const legsN = Array.isArray(x.legs) ? x.legs.filter((l) => l && typeof l === "object").map((l) => ({ ...l, pick: String(l.pick || ""), league: String(l.league || ""), odds: parseOdds(l.odds) })) : [];
+        return { ...x, legs: legsN, id: d.id, league: String(x.league || x.sport || "Other"), odds, amount, status, profit: profitOf(status, odds, amount) };
       });
       renderAll();
     }, () => showNotice("Live updates stopped. Reload the page to reconnect."));
