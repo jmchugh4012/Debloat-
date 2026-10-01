@@ -106,6 +106,22 @@ textarea { resize: vertical; min-height: 64px; }
 .seg button { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
 .seg button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 
+/* Screenshot import */
+.import { border: 1px dashed var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 10px; background: var(--paper); }
+.import.drag { border-color: var(--accent); background: var(--tint); }
+.import-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.import p { margin: 0; font-size: 13px; color: var(--muted); }
+.import .status { font-size: 13px; font-family: var(--mono); color: var(--muted); }
+.import .status.bad { color: var(--lost); font-family: var(--body); }
+.import textarea { min-height: 44px; font-size: 13px; }
+.thumb { max-height: 72px; border-radius: 4px; border: 1px solid var(--line); }
+.found { display: grid; gap: 6px; }
+.found button { text-align: left; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 8px 12px; font-size: 14px; }
+.found button:hover { border-color: var(--accent); }
+.found button span:last-child { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.found button[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
 /* Tabs */
 .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .tabs { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--card); }
@@ -183,6 +199,21 @@ textarea { resize: vertical; min-height: 64px; }
 
   <section class="panel" id="post-panel" hidden>
     <h2 id="post-title">Post a bet</h2>
+    <div class="import" id="import" hidden>
+      <div class="import-row">
+        <label class="btn primary" for="imp-file" style="text-transform:none;letter-spacing:normal;color:var(--accent-ink);font-size:14px">Import from screenshot</label>
+        <input class="sr" type="file" id="imp-file" accept="image/png,image/jpeg,image/webp,image/gif">
+        <img class="thumb" id="imp-thumb" alt="Your screenshot" hidden>
+        <button class="btn small" type="button" id="imp-stop" hidden>Stop</button>
+        <span class="status" id="imp-status"></span>
+      </div>
+      <p>Screenshot a bet slip or “My Bets” from DraftKings, FanDuel or any sportsbook. You can also drop or paste the image here, or paste the bet text below. Claude fills in the form and you check it before posting.</p>
+      <div class="import-row">
+        <textarea id="imp-text" placeholder="Or paste bet text, e.g. from a share link" aria-label="Bet text to import"></textarea>
+        <button class="btn small" type="button" id="imp-text-go">Fill from text</button>
+      </div>
+      <div class="found" id="imp-found" hidden></div>
+    </div>
     <form id="post-form" class="grid" novalidate>
       <label>League<input id="f-league" list="league-list" maxlength="20" placeholder="NFL" value="NFL"></label>
       <datalist id="league-list">
@@ -507,14 +538,16 @@ textarea { resize: vertical; min-height: 64px; }
     for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time"]) $(id).value = "";
     setFormStatus("pending");
     $("#post-title").textContent = "Post a bet";
+    $("#import").style.display = "";
     $("#f-submit").textContent = "Post bet";
     $("#f-cancel").hidden = true;
     $("#f-err").textContent = "";
     updateHints();
   }
+  function clearImport() { found = []; showFound(); impStatus(""); $("#imp-thumb").hidden = true; $("#imp-text").value = ""; }
   function togglePost() {
     const p = $("#post-panel");
-    if (!p.hidden) resetForm();
+    if (!p.hidden) { resetForm(); clearImport(); impCtl?.abort(); }
     p.hidden = !p.hidden;
     $("#profile-panel").hidden = true;
     renderHeader();
@@ -528,6 +561,7 @@ textarea { resize: vertical; min-height: 64px; }
     $("#f-time").value = toLocalInput(b.startsAt); $("#f-note").value = b.note || "";
     setFormStatus(b.status);
     $("#post-title").textContent = "Edit bet";
+    $("#import").dataset.editing = "1"; $("#import").style.display = "none";
     $("#f-submit").textContent = "Save changes";
     $("#f-cancel").hidden = false;
     $("#post-panel").hidden = false;
@@ -591,6 +625,12 @@ textarea { resize: vertical; min-height: 64px; }
       } else {
         await db.collection("bets").add({ ...body, postedAt: new Date().toISOString() });
         resetForm();
+        if (found.length) {
+          found.splice(found.sel || 0, 1); found.sel = 0;
+          if (found.length) { fillForm(found[0]); impStatus(`Posted. ${found.length} more from your screenshot — check the next one.`); }
+          else { impStatus("Posted."); $("#imp-thumb").hidden = true; }
+          showFound();
+        }
         filter = formStatus === "pending" ? "open" : filter;
         btn.textContent = "Posted ✓";
         setTimeout(() => { if (!editing) btn.textContent = "Post bet"; }, 1200);
@@ -637,6 +677,115 @@ textarea { resize: vertical; min-height: 64px; }
     saveMine(m);
   }
 
+  // ---- screenshot / text import ------------------------------------------
+  let sample = null, canImages = false, impCtl = null, found = [];
+  const impStatus = (msg, bad) => { const s = $("#imp-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); };
+
+  const IMPORT_PROMPT = (extra) => `You read sports betting slips from sportsbooks like DraftKings, FanDuel, BetMGM, Caesars or ESPN Bet.
+Today's date is ${new Date().toDateString()} and the bettor's time zone is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
+${extra}
+Extract every distinct bet. Reply with only a JSON array; each item:
+{"league": string (short league name like "NFL","NBA","MLB","NHL","NCAAF","NCAAB","WNBA","EPL","UFC"; infer from the teams if not shown),
+ "market": one of "Spread","Moneyline","Total","Player prop","Parlay","Future","Other",
+ "pick": string (what was bet, short, e.g. "Chiefs -3.5", "Over 47.5", "Jalen Brunson 25+ pts"; for a parlay or same game parlay list the legs separated by " + "),
+ "event": string (the matchup, e.g. "Bills @ Chiefs", or ""),
+ "odds": integer American odds of the whole bet (e.g. -110, 250),
+ "amount": number, the dollar stake / wager (not the payout),
+ "startsAt": game start as local "YYYY-MM-DDTHH:MM" if shown, else "",
+ "status": "pending" if not settled, else "won", "lost" or "push"}
+If a value is not visible, use "" (or null for odds/amount). If there are no bets, reply [].
+Example: [{"league":"NFL","market":"Spread","pick":"Chiefs -3.5","event":"Bills @ Chiefs","odds":-110,"amount":50,"startsAt":"2026-10-04T20:20","status":"pending"}]`;
+
+  function fillForm(x) {
+    if (!x) return;
+    if (x.league) $("#f-league").value = String(x.league).slice(0, 20);
+    const markets = [...$("#f-market").options].map((o) => o.value);
+    $("#f-market").value = markets.includes(x.market) ? x.market : "Other";
+    $("#f-pick").value = String(x.pick || "").slice(0, 80);
+    $("#f-event").value = String(x.event || "").slice(0, 100);
+    if (parseOdds(x.odds)) $("#f-odds").value = String(parseOdds(x.odds));
+    if (parseMoney(x.amount)) $("#f-amount").value = String(parseMoney(x.amount));
+    $("#f-time").value = /^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(x.startsAt || "") ? x.startsAt.slice(0, 16) : "";
+    setFormStatus(["won", "lost", "push"].includes(x.status) ? x.status : "pending");
+    updateHints();
+  }
+
+  function showFound() {
+    const box = $("#imp-found");
+    box.hidden = found.length < 2;
+    if (found.length < 2) { box.replaceChildren(); return; }
+    box.replaceChildren(h("span", { class: "eyebrow", text: `Found ${found.length} bets. Pick one to fill the form, post it, then pick the next.` }),
+      ...found.map((x, i) => h("button", {
+        type: "button", "aria-pressed": i === found.sel ? "true" : "false",
+        onclick: () => { found.sel = i; fillForm(x); showFound(); $("#f-pick").focus(); },
+      }, h("span", { text: `${x.league || "?"} · ${x.pick || "Unknown pick"}` }),
+         h("span", { text: [parseOdds(x.odds) ? fmtOdds(parseOdds(x.odds)) : "", parseMoney(x.amount) ? fmt$(parseMoney(x.amount)) : ""].filter(Boolean).join(" · ") }))));
+  }
+
+  async function runImport(input, images) {
+    if (!sample) return;
+    impCtl?.abort();
+    const ctl = impCtl = new AbortController();
+    $("#imp-stop").hidden = false;
+    impStatus("Reading your bet… this can take up to a minute");
+    try {
+      const res = await sample.json(input, { signal: ctl.signal, images, modelTier: "default" });
+      const list = (Array.isArray(res) ? res : res && typeof res === "object" ? [res] : []).filter((x) => x && typeof x === "object" && (x.pick || x.event));
+      found = list; found.sel = 0;
+      if (!list.length) { impStatus("Couldn't find a bet in that. Try a clearer screenshot of the bet slip.", true); showFound(); return; }
+      fillForm(list[0]);
+      showFound();
+      impStatus(list.length === 1 ? "Filled in. Check the details, then post." : "Filled in the first bet. Check it, then post.");
+      $("#f-pick").focus();
+    } catch (e) {
+      const c = e?.code;
+      if (c === "cancelled") impStatus("");
+      else if (c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled" || c === "capability_removed") { $("#import").hidden = true; }
+      else if (c === "images_unavailable") { canImages = false; impStatus("Screenshots can't be read here. Paste the bet text instead.", true); }
+      else if (c === "image_rejected") impStatus("That image couldn't be read. Use a PNG or JPG screenshot.", true);
+      else if (c === "rate_limited") impStatus("Too many imports at once. Wait a minute and try again.", true);
+      else if (c === "invalid_json") impStatus("Couldn't make sense of that one. Try again or fill the form by hand.", true);
+      else impStatus("Import failed. Try again, or fill the form by hand.", true);
+    } finally {
+      if (impCtl === ctl) { impCtl = null; $("#imp-stop").hidden = true; }
+    }
+  }
+
+  function importImage(file) {
+    if (!file || !file.type?.startsWith("image/")) return;
+    if (!canImages) { impStatus("Screenshots can't be read here. Paste the bet text instead.", true); return; }
+    const t = $("#imp-thumb"); try { t.src = URL.createObjectURL(file); t.hidden = false; } catch {}
+    runImport(IMPORT_PROMPT("The attached image is a screenshot from a sportsbook app or website showing one or more bets."), file);
+  }
+
+  $("#imp-file").addEventListener("change", (e) => { importImage(e.target.files?.[0]); e.target.value = ""; });
+  $("#imp-stop").addEventListener("click", () => impCtl?.abort());
+  $("#imp-text-go").addEventListener("click", () => {
+    const txt = $("#imp-text").value.trim().slice(0, 8000);
+    if (!txt) { impStatus("Paste some bet text first.", true); return; }
+    runImport(IMPORT_PROMPT("Here is text copied from a sportsbook bet slip or share link:\n\n" + txt), undefined);
+  });
+  const imp = $("#import");
+  imp.addEventListener("dragover", (e) => { e.preventDefault(); imp.classList.add("drag"); });
+  imp.addEventListener("dragleave", () => imp.classList.remove("drag"));
+  imp.addEventListener("drop", (e) => { e.preventDefault(); imp.classList.remove("drag"); importImage(e.dataTransfer?.files?.[0]); });
+  document.addEventListener("paste", (e) => {
+    if ($("#post-panel").hidden || $("#import").hidden) return;
+    const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith("image/"));
+    if (f) { e.preventDefault(); importImage(f); }
+  });
+
+  async function setupImport() {
+    if (!isAdmin || !window.claude?.use) return;
+    sample = await window.claude.use("sample");
+    if (!sample) return;
+    const lim = await sample.limits().catch(() => null);
+    canImages = !!lim?.images;
+    if (lim?.images?.mediaTypes?.length) $("#imp-file").accept = lim.images.mediaTypes.join(",");
+    if (!canImages) { $("label[for=imp-file]").hidden = true; }
+    $("#import").hidden = false;
+  }
+
   function showNotice(msg) { const n = $("#notice"); n.textContent = msg; n.hidden = false; }
 
   for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => { filter = b.dataset.f; renderSlips(); });
@@ -651,6 +800,7 @@ textarea { resize: vertical; min-height: 64px; }
       [myId, isAdmin, isOwner, canFollow] = await Promise.all([user.id(), user.canEdit(), user.isOwner(), user.can("data.write")]);
       isAdmin = isAdmin || isOwner;
     }
+    setupImport();
     if (!db) { renderAll(); return; }
     if (!isAdmin && myId && canFollow === false) showNotice("You can view these bets, but following and tailing need Contributor access. Ask the page owner to share it with you as a Contributor.");
     if (!isAdmin && !myId) showNotice("Sign in to follow and tail bets.");
