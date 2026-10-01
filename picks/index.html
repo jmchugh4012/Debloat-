@@ -106,6 +106,10 @@ textarea { resize: vertical; min-height: 64px; }
 .seg button { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
 .seg button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 
+.prop-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 520px) { .prop-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .prop-who { grid-column: 1 / -1; } }
+optgroup { font-style: normal; font-weight: 700; }
+
 /* Screenshot import */
 .import { border: 1px dashed var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 10px; background: var(--paper); }
 .import.drag { border-color: var(--accent); background: var(--tint); }
@@ -219,17 +223,16 @@ textarea { resize: vertical; min-height: 64px; }
       <div class="found" id="imp-found" hidden></div>
     </div>
     <form id="post-form" class="grid" novalidate>
-      <label>League<input id="f-league" list="league-list" maxlength="20" placeholder="NFL" value="NFL"></label>
-      <datalist id="league-list">
-        <option value="NFL"></option><option value="NBA"></option><option value="MLB"></option><option value="NHL"></option>
-        <option value="NCAAF"></option><option value="NCAAB"></option><option value="WNBA"></option><option value="MLS"></option>
-        <option value="EPL"></option><option value="Champions League"></option><option value="UFC"></option><option value="ATP"></option>
-        <option value="WTA"></option><option value="PGA"></option><option value="F1"></option>
-      </datalist>
-      <label>Bet type<select id="f-market">
-        <option>Spread</option><option>Moneyline</option><option>Total</option><option>Player prop</option><option>Parlay</option><option>Future</option><option>Other</option>
-      </select></label>
-      <label class="full">Your pick<input id="f-pick" maxlength="80" placeholder="Chiefs -3.5" required></label>
+      <label>League<select id="f-league-sel"></select></label>
+      <label>Bet type<select id="f-market"></select></label>
+      <label class="full" id="f-league-wrap" hidden>League name<input id="f-league" maxlength="20" placeholder="e.g. KBO, CFL, Euroleague"></label>
+      <label class="full" id="f-detail-wrap" hidden><span id="f-detail-label">Type</span><select id="f-detail"></select></label>
+      <div class="full prop-row" id="f-prop" hidden>
+        <label class="prop-who"><span id="f-player-label">Player</span><input id="f-player" maxlength="40" placeholder="Player name"></label>
+        <label>Over / Under<select id="f-side"><option>Over</option><option>Under</option><option>Yes</option><option>No</option></select></label>
+        <label id="f-line-wrap">Line<input id="f-line" inputmode="decimal" maxlength="8" placeholder="e.g. 74.5"></label>
+      </div>
+      <label class="full">Your pick <span class="hint" id="f-pick-hint"></span><input id="f-pick" maxlength="120" placeholder="Chiefs -3.5" required></label>
       <label class="full">Game or event<input id="f-event" maxlength="100" placeholder="Bills @ Chiefs"></label>
       <label>Odds <span class="hint" id="f-odds-hint">−110 → 52.4% implied</span><input id="f-odds" inputmode="numeric" placeholder="-110" value="-110"></label>
       <label>Amount ($) <span class="hint" id="f-amt-hint">to win $90.91</span><input id="f-amount" inputmode="decimal" placeholder="100" value="100"></label>
@@ -511,7 +514,7 @@ textarea { resize: vertical; min-height: 64px; }
       ),
       h("div", { class: "slip-body" },
         h("div", { class: "slip-top" },
-          h("span", { class: "meta", text: [b.market, when].filter(Boolean).join(" · ") }),
+          h("span", { class: "meta", text: [b.market, b.detail, when].filter(Boolean).join(" · ") }),
           h("span", { class: "chip " + st, text: label }),
         ),
         h("div", { class: "pick", text: b.pick }),
@@ -530,6 +533,243 @@ textarea { resize: vertical; min-height: 64px; }
     try { navigator.clipboard.writeText(slipText(b)).then(() => done(true), () => done(false)); } catch { done(false); }
   }
 
+  // ---- bet catalog: bet types and props by sport ------------------------
+  const LEAGUE_GROUPS = [
+    ["Football", ["NFL", "NCAAF"]],
+    ["Basketball", ["NBA", "WNBA", "NCAAB"]],
+    ["Baseball", ["MLB"]],
+    ["Hockey", ["NHL"]],
+    ["Soccer", ["EPL", "MLS", "Champions League", "La Liga", "Serie A", "Bundesliga"]],
+    ["Fighting", ["UFC"]],
+    ["Tennis", ["ATP", "WTA"]],
+    ["Golf", ["PGA"]],
+    ["Racing", ["F1"]],
+  ];
+  const SPORT_OF = { NFL: "football", NCAAF: "football", NBA: "basketball", WNBA: "basketball", NCAAB: "basketball", MLB: "baseball", NHL: "hockey",
+    EPL: "soccer", MLS: "soccer", "Champions League": "soccer", "La Liga": "soccer", "Serie A": "soccer", Bundesliga: "soccer",
+    UFC: "mma", ATP: "tennis", WTA: "tennis", PGA: "golf", F1: "racing" };
+  const F = "futures";
+  const CATALOG = {
+    football: {
+      "Spread": 0, "Moneyline": 0, "Total": 0,
+      "Player prop": ["Passing yards", "Passing TDs", "Pass completions", "Pass attempts", "Interceptions thrown", "Longest completion",
+        "Rushing yards", "Rushing attempts", "Longest rush", "Receiving yards", "Receptions", "Longest reception",
+        "Rush + rec yards", "Pass + rush yards", "Anytime TD scorer", "First TD scorer", "Last TD scorer", "2+ TDs",
+        "Tackles + assists", "Sacks", "Defensive interceptions", "Field goals made", "Kicking points", "Extra points made"],
+      "Team prop": ["Team total points", "Team total TDs", "Team field goals made", "Team to score first", "Team to score in every quarter"],
+      "Game prop": ["First to score", "First scoring play (TD/FG)", "Overtime", "Winning margin", "Total TDs", "Highest scoring half", "Safety", "Two-point conversion made"],
+      "1st half": ["Spread", "Moneyline", "Total"], "1st quarter": ["Spread", "Moneyline", "Total"], "2nd half": ["Spread", "Moneyline", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Teaser": ["6-point", "6.5-point", "7-point", "10-point"], "Future": F, "Other": 0,
+    },
+    basketball: {
+      "Spread": 0, "Moneyline": 0, "Total": 0,
+      "Player prop": ["Points", "Rebounds", "Assists", "Threes made", "Pts + Reb + Ast", "Pts + Reb", "Pts + Ast", "Reb + Ast",
+        "Steals", "Blocks", "Steals + Blocks", "Turnovers", "Free throws made", "Double-double", "Triple-double", "First basket"],
+      "Team prop": ["Team total points", "Team threes made", "Team to score first", "Race to 20 points"],
+      "Game prop": ["First team to score", "Overtime", "Winning margin", "Highest scoring quarter", "Odd/even total points"],
+      "1st half": ["Spread", "Moneyline", "Total"], "1st quarter": ["Spread", "Moneyline", "Total"], "2nd half": ["Spread", "Moneyline", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    baseball: {
+      "Run line": 0, "Moneyline": 0, "Total": 0,
+      "Player prop": ["Hits", "Total bases", "Home runs", "RBIs", "Runs scored", "Hits + Runs + RBIs", "Singles", "Doubles",
+        "Stolen bases", "Batter walks", "Batter strikeouts", "Pitcher strikeouts", "Outs recorded", "Hits allowed",
+        "Earned runs allowed", "Walks allowed", "Pitcher to record a win"],
+      "Team prop": ["Team total runs", "Team to score first", "Team home runs", "Team hits"],
+      "Game prop": ["Extra innings", "Total hits (both teams)", "Winning margin", "Team to score last", "Grand slam hit"],
+      "1st inning": ["No run first inning (NRFI)", "Yes run first inning (YRFI)"],
+      "First 5 innings": ["Run line", "Moneyline", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    hockey: {
+      "Puck line": 0, "Moneyline": 0, "60-minute line (3-way)": 0, "Total": 0,
+      "Player prop": ["Shots on goal", "Anytime goal scorer", "First goal scorer", "Last goal scorer", "2+ goals", "Assists", "Points",
+        "Power play points", "Blocked shots", "Hits", "Goalie saves", "Goals against", "Goalie shutout"],
+      "Team prop": ["Team total goals", "Team to score first", "Team shots on goal"],
+      "Game prop": ["Overtime", "Shootout", "Both teams to score", "First to score", "Period with most goals", "Winning margin"],
+      "1st period": ["Puck line", "Moneyline (3-way)", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    soccer: {
+      "Moneyline (3-way)": 0, "Double chance": 0, "Draw no bet": 0, "Spread (handicap)": 0, "Total goals": 0, "Both teams to score": 0,
+      "Player prop": ["Anytime goalscorer", "First goalscorer", "Last goalscorer", "2+ goals", "Goal or assist", "Assists", "Shots",
+        "Shots on target", "Passes", "Tackles", "Goalkeeper saves", "To be carded"],
+      "Team prop": ["Team total goals", "Team corners", "Team to score first", "Clean sheet"],
+      "Game prop": ["Total corners", "Total cards", "Correct score", "Half with most goals", "Halftime/fulltime"],
+      "1st half": ["Moneyline (3-way)", "Spread (handicap)", "Total goals", "Both teams to score"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    mma: {
+      "Moneyline": 0,
+      "Method of victory": ["KO/TKO", "Submission", "Decision", "Unanimous decision", "Split decision"],
+      "Round betting": ["Round 1", "Round 2", "Round 3", "Round 4", "Round 5"],
+      "Total rounds": 0, "Goes the distance": 0,
+      "Fighter prop": ["Significant strikes", "Takedowns", "Knockdowns", "Submission attempts", "Win by KO/TKO", "Win by submission",
+        "Win by decision", "Win inside the distance"],
+      "Fight prop": ["Fight ends in round 1", "Fight of the Night", "Performance of the Night", "Both fighters knocked down"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    tennis: {
+      "Moneyline": 0, "Game spread": 0, "Set spread": 0, "Total games": 0,
+      "Set betting": ["2-0", "2-1", "0-2", "1-2", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"],
+      "Player prop": ["Aces", "Double faults", "Games won", "Breaks of serve", "To win a set", "Win in straight sets"],
+      "Match prop": ["Tiebreak in match", "Total sets", "First set winner", "Total aces in match"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    golf: {
+      "Outright winner": 0, "Top 5": 0, "Top 10": 0, "Top 20": 0, "Top 40": 0,
+      "Make/miss cut": ["Make the cut", "Miss the cut"],
+      "Matchup": ["Tournament matchup", "Round matchup", "3-ball"],
+      "Round leader": ["First round leader", "Second round leader", "Third round leader"],
+      "Player prop": ["Round score", "Birdies or better", "Bogeys or worse", "Hole in one", "Top nationality", "Winning score"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    racing: {
+      "Race winner": 0, "Podium finish": 0, "Top 6 finish": 0, "Top 10 finish": 0, "Head-to-head": 0, "Fastest lap": 0, "Pole position": 0,
+      "Race prop": ["Safety car", "Classified finishers", "Winning margin", "Winning constructor"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    other: {
+      "Spread": 0, "Moneyline": 0, "Total": 0, "Player prop": ["Points", "Goals", "Assists", "Other stat"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+  };
+  const SOCCER_FUT = ["League winner", "Top 4 finish", "Relegation", "Top goalscorer (Golden Boot)", "To win the domestic cup"];
+  const FUTURES = {
+    NFL: ["Super Bowl winner", "Conference winner", "Division winner", "Regular season win total", "To make the playoffs", "MVP",
+      "Offensive Player of the Year", "Defensive Player of the Year", "Offensive Rookie of the Year", "Defensive Rookie of the Year",
+      "Comeback Player of the Year", "Coach of the Year", "Passing yards leader", "Rushing yards leader", "Receiving yards leader", "Most passing TDs"],
+    NCAAF: ["National championship", "Conference champion", "Heisman Trophy", "Regular season win total", "To make the College Football Playoff"],
+    NBA: ["NBA champion", "Conference winner", "Division winner", "Regular season win total", "To make the playoffs", "MVP", "Rookie of the Year",
+      "Defensive Player of the Year", "Sixth Man of the Year", "Most Improved Player", "Clutch Player of the Year", "Coach of the Year"],
+    WNBA: ["WNBA champion", "Regular season win total", "MVP", "Rookie of the Year", "Defensive Player of the Year"],
+    NCAAB: ["National championship", "To reach the Final Four", "Region winner", "Conference tournament winner", "Regular season conference winner"],
+    MLB: ["World Series winner", "League pennant", "Division winner", "Regular season win total", "To make the playoffs", "AL MVP", "NL MVP",
+      "AL Cy Young", "NL Cy Young", "AL Rookie of the Year", "NL Rookie of the Year", "Home run leader"],
+    NHL: ["Stanley Cup winner", "Conference winner", "Division winner", "Regular season points total", "To make the playoffs", "Hart Trophy (MVP)",
+      "Vezina Trophy", "Norris Trophy", "Calder Trophy", "Rocket Richard (most goals)", "Art Ross (most points)", "Conn Smythe"],
+    EPL: SOCCER_FUT, "La Liga": SOCCER_FUT, "Serie A": SOCCER_FUT, Bundesliga: SOCCER_FUT,
+    MLS: ["MLS Cup winner", "Supporters' Shield", "Conference winner", "Golden Boot"],
+    "Champions League": ["Champions League winner", "To reach the final", "Top goalscorer"],
+    UFC: ["To win a title by year end", "Title fight winner"],
+    ATP: ["Tournament winner", "To reach the final", "Grand Slam winner", "Year-end No. 1"],
+    WTA: ["Tournament winner", "To reach the final", "Grand Slam winner", "Year-end No. 1"],
+    PGA: ["Tournament winner", "Major winner", "FedEx Cup champion", "Ryder Cup winner", "Player of the Year"],
+    F1: ["Drivers' Championship", "Constructors' Championship", "Most race wins"],
+  };
+  const OTHER_FUT = ["Championship winner", "Season win total", "Award winner"];
+  // Markets that name a person or team and take Over/Under or Yes/No.
+  const PERSON_MARKETS = { "Player prop": "Player", "Fighter prop": "Fighter", "Team prop": "Team" };
+  const DETAIL_LABEL = { "Player prop": "Stat", "Fighter prop": "Stat", "Team prop": "Stat", "Future": "Future", "Method of victory": "Method",
+    "Round betting": "Round", "Set betting": "Set score", "Teaser": "Teaser points" };
+  const YES_NO = /anytime|first|last|2\+|double-double|triple-double|carded|shutout|^win |inside the distance|to win a set|straight sets|hole in one|to score|to record/i;
+  const PICK_EXAMPLE = { "Spread": "Chiefs -3.5", "Run line": "Dodgers -1.5", "Puck line": "Rangers +1.5", "Moneyline": "Chiefs ML", "Total": "Over 47.5",
+    "Total goals": "Over 2.5", "Total games": "Over 22.5", "Total rounds": "Under 2.5", "Moneyline (3-way)": "Arsenal to win", "Future": "Chiefs to win the Super Bowl",
+    "Parlay": "Chiefs ML + Lakers -4.5", "Same game parlay": "Chiefs ML + Kelce 60+ rec yds" };
+
+  const sportOf = (league) => SPORT_OF[league] || "other";
+  const marketsFor = (league) => CATALOG[sportOf(league)];
+  const detailsFor = (league, market) => {
+    const d = marketsFor(league)[market];
+    return d === F ? (FUTURES[league] || OTHER_FUT) : Array.isArray(d) ? d : null;
+  };
+
+  const leagueSel = $("#f-league-sel");
+  leagueSel.replaceChildren(
+    ...LEAGUE_GROUPS.map(([g, ls]) => h("optgroup", { label: g }, ls.map((l) => h("option", { value: l, text: l })))),
+    h("option", { value: "__other", text: "Other league…" }),
+  );
+  const getLeague = () => {
+    if (leagueSel.value !== "__other") return leagueSel.value;
+    const v = $("#f-league").value.trim();
+    return v.length <= 5 ? v.toUpperCase() : v;
+  };
+  function setLeague(v) {
+    v = String(v || "").trim();
+    const known = Object.keys(SPORT_OF).find((l) => l.toLowerCase() === v.toLowerCase());
+    if (known) { leagueSel.value = known; $("#f-league").value = ""; }
+    else if (v) { leagueSel.value = "__other"; $("#f-league").value = v; }
+    $("#f-league-wrap").hidden = leagueSel.value !== "__other";
+    refreshMarkets();
+  }
+
+  let pickTouched = false;
+  function selectFill(sel, values, keep) {
+    const want = keep ?? sel.value;
+    const list = [...values];
+    if (want && !list.includes(want) && keep != null) list.push(want); // keep a saved value that isn't in the list
+    sel.replaceChildren(...list.map((v) => h("option", { value: v, text: v })));
+    const match = list.find((v) => v.toLowerCase() === String(want || "").toLowerCase());
+    sel.value = match || list[0] || "";
+  }
+  function refreshMarkets(keep) {
+    const lg = leagueSel.value === "__other" ? "__other" : leagueSel.value;
+    selectFill($("#f-market"), Object.keys(marketsFor(lg)), keep);
+    refreshDetail();
+  }
+  function refreshDetail(keep) {
+    const m = $("#f-market").value;
+    const list = detailsFor(leagueSel.value, m);
+    $("#f-detail-wrap").hidden = !list;
+    if (list) { $("#f-detail-label").textContent = DETAIL_LABEL[m] || "Type"; selectFill($("#f-detail"), list, keep); }
+    const who = PERSON_MARKETS[m];
+    $("#f-prop").hidden = !who;
+    if (who) {
+      $("#f-player-label").textContent = who;
+      $("#f-player").placeholder = who === "Team" ? "Team name" : who + " name";
+      if (keep == null) $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over";
+    }
+    refreshProp();
+  }
+  function refreshProp() {
+    const side = $("#f-side").value;
+    $("#f-line-wrap").hidden = side === "Yes" || side === "No";
+    const m = $("#f-market").value;
+    $("#f-pick").placeholder = PICK_EXAMPLE[m] || (PERSON_MARKETS[m] ? "Filled in from the fields above" : "Describe the bet");
+    $("#f-pick-hint").textContent = PERSON_MARKETS[m] && !pickTouched ? "built from the fields above, edit if you like" : "";
+    composePick();
+  }
+  function composePick() {
+    const m = $("#f-market").value;
+    if (pickTouched || !PERSON_MARKETS[m]) return;
+    const who = $("#f-player").value.trim(), side = $("#f-side").value, line = $("#f-line").value.trim(), stat = $("#f-detail").value;
+    if (!who) { $("#f-pick").value = ""; return; }
+    $("#f-pick").value = side === "Yes" ? `${who} ${stat}` : side === "No" ? `${who} No ${stat}` : `${who} ${side}${line ? " " + line : ""} ${stat}`;
+  }
+  leagueSel.addEventListener("change", () => { $("#f-league-wrap").hidden = leagueSel.value !== "__other"; refreshMarkets(); if (!$("#f-league-wrap").hidden) $("#f-league").focus(); });
+  $("#f-market").addEventListener("change", () => refreshDetail());
+  $("#f-detail").addEventListener("change", () => { if (PERSON_MARKETS[$("#f-market").value]) $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over"; refreshProp(); });
+  $("#f-side").addEventListener("change", refreshProp);
+  $("#f-player").addEventListener("input", composePick);
+  $("#f-line").addEventListener("input", composePick);
+  $("#f-pick").addEventListener("input", () => { pickTouched = $("#f-pick").value.trim() !== ""; $("#f-pick-hint").textContent = ""; });
+
+  function readBetType() {
+    const m = $("#f-market").value;
+    const out = { market: m, detail: $("#f-detail-wrap").hidden ? "" : $("#f-detail").value, player: "", side: "", line: "" };
+    if (PERSON_MARKETS[m]) {
+      out.player = $("#f-player").value.trim();
+      out.side = $("#f-side").value;
+      out.line = $("#f-line-wrap").hidden ? "" : $("#f-line").value.trim();
+    }
+    return out;
+  }
+  function writeBetType(x, pickFromData) {
+    setLeague(x.league || "NFL");
+    refreshMarkets(x.market || undefined);
+    refreshDetail(x.detail || undefined);
+    $("#f-player").value = x.player || "";
+    if (["Over", "Under", "Yes", "No"].includes(x.side)) $("#f-side").value = x.side;
+    $("#f-line").value = x.line != null && x.line !== "" ? String(x.line) : "";
+    pickTouched = !!pickFromData;
+    refreshProp();
+    if (pickFromData) $("#f-pick").value = String(pickFromData).slice(0, 120);
+  }
+  const catalogForPrompt = () => Object.entries(CATALOG).map(([sport, mk]) => {
+    const leagues = Object.entries(SPORT_OF).filter(([, s]) => s === sport).map(([l]) => l).join(", ") || "any other league";
+    return `${sport} (${leagues}): ` + Object.entries(mk).map(([m, d]) => Array.isArray(d) ? `${m} [${d.join(" | ")}]` : d === F ? `${m} [futures market, e.g. ${(FUTURES[leagues.split(", ")[0]] || OTHER_FUT).slice(0, 3).join(" | ")}]` : m).join("; ");
+  }).join("\n");
+
   // ---- owner actions ----------------------------------------------------
   function setFormStatus(s) {
     formStatus = s;
@@ -539,7 +779,9 @@ textarea { resize: vertical; min-height: 64px; }
 
   function resetForm() {
     editing = null;
-    for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time"]) $(id).value = "";
+    for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time", "#f-player", "#f-line"]) $(id).value = "";
+    pickTouched = false;
+    refreshDetail();
     setFormStatus("pending");
     $("#post-title").textContent = "Post a bet";
     $("#import").style.display = "";
@@ -559,8 +801,8 @@ textarea { resize: vertical; min-height: 64px; }
   }
   function startEdit(b) {
     editing = b.id;
-    $("#f-league").value = b.league; $("#f-market").value = b.market || "Other";
-    $("#f-pick").value = b.pick; $("#f-event").value = b.event || "";
+    writeBetType(b, b.pick);
+    $("#f-event").value = b.event || "";
     $("#f-odds").value = String(b.odds); $("#f-amount").value = String(b.amount);
     $("#f-time").value = toLocalInput(b.startsAt); $("#f-note").value = b.note || "";
     setFormStatus(b.status);
@@ -602,20 +844,19 @@ textarea { resize: vertical; min-height: 64px; }
   $("#post-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const err = $("#f-err");
-    const league = $("#f-league").value.trim();
+    const league = getLeague();
     const pick = $("#f-pick").value.trim();
     const odds = parseOdds($("#f-odds").value);
     const amount = parseMoney($("#f-amount").value);
     if (!league) { err.textContent = "Add the league, like NFL or NBA."; return; }
-    if (!pick) { err.textContent = "Add your pick, like “Chiefs -3.5”."; return; }
+    if (!pick) { err.textContent = PERSON_MARKETS[$("#f-market").value] ? "Add the name above, or type your pick." : "Add your pick, like “Chiefs -3.5”."; return; }
     if (!odds) { err.textContent = "Odds need to be American odds of at least 100, like -110 or +150."; return; }
     if (!amount) { err.textContent = "Enter the amount you bet in dollars, like 50."; return; }
     err.textContent = "";
     const btn = $("#f-submit"); btn.disabled = true;
     const t = $("#f-time").value;
     const body = {
-      league: league.toUpperCase().length <= 5 ? league.toUpperCase() : league,
-      market: $("#f-market").value, pick, event: $("#f-event").value.trim(), odds, amount,
+      league, ...readBetType(), pick, event: $("#f-event").value.trim(), odds, amount,
       startsAt: t ? new Date(t).toISOString() : "", note: $("#f-note").value.trim(), status: formStatus,
       settledAt: formStatus === "pending" ? "" : new Date().toISOString(),
     };
@@ -690,7 +931,11 @@ Today's date is ${new Date().toDateString()} and the bettor's time zone is ${Int
 ${extra}
 Extract every distinct bet. Reply with only a JSON array; each item:
 {"league": string (short league name like "NFL","NBA","MLB","NHL","NCAAF","NCAAB","WNBA","EPL","UFC"; infer from the teams if not shown),
- "market": one of "Spread","Moneyline","Total","Player prop","Parlay","Future","Other",
+ "market": the bet type, chosen from the list for that league's sport below,
+ "detail": the sub-type from that bet type's [options] (the stat for a player prop, the futures market, the half's market, etc.), or "",
+ "player": for Player/Fighter/Team props, the player, fighter or team name, else "",
+ "side": for props, "Over", "Under", "Yes" or "No", else "",
+ "line": for over/under props, the number as a string like "74.5", else "",
  "pick": string (what was bet, short, e.g. "Chiefs -3.5", "Over 47.5", "Jalen Brunson 25+ pts"; for a parlay or same game parlay list the legs separated by " + "),
  "event": string (the matchup, e.g. "Bills @ Chiefs", or ""),
  "odds": integer American odds of the whole bet (e.g. -110, 250),
@@ -698,14 +943,18 @@ Extract every distinct bet. Reply with only a JSON array; each item:
  "startsAt": game start as local "YYYY-MM-DDTHH:MM" if shown, else "",
  "status": "pending" if not settled, else "won", "lost" or "push"}
 If a value is not visible, use "" (or null for odds/amount). If there are no bets, reply [].
-Example: [{"league":"NFL","market":"Spread","pick":"Chiefs -3.5","event":"Bills @ Chiefs","odds":-110,"amount":50,"startsAt":"2026-10-04T20:20","status":"pending"}]`;
+Bet types by sport (use these exact names):
+${catalogForPrompt()}
+Example: [{"league":"NFL","market":"Player prop","detail":"Rushing yards","player":"Derrick Henry","side":"Over","line":"89.5","pick":"Derrick Henry Over 89.5 Rushing yards","event":"Ravens @ Bengals","odds":-115,"amount":25,"startsAt":"2026-10-04T13:00","status":"pending"},{"league":"NFL","market":"Spread","detail":"","player":"","side":"","line":"","pick":"Chiefs -3.5","event":"Bills @ Chiefs","odds":-110,"amount":50,"startsAt":"2026-10-04T20:20","status":"pending"}]`;
 
   function fillForm(x) {
     if (!x) return;
-    if (x.league) $("#f-league").value = String(x.league).slice(0, 20);
-    const markets = [...$("#f-market").options].map((o) => o.value);
-    $("#f-market").value = markets.includes(x.market) ? x.market : "Other";
-    $("#f-pick").value = String(x.pick || "").slice(0, 80);
+    const lg = x.league ? String(x.league).slice(0, 20) : getLeague();
+    const mk = Object.keys(marketsFor(SPORT_OF[lg] ? lg : "__other"));
+    const market = mk.find((m) => m.toLowerCase() === String(x.market || "").toLowerCase()) || "Other";
+    const dl = detailsFor(SPORT_OF[lg] ? lg : "__other", market) || [];
+    const detail = dl.find((d) => d.toLowerCase() === String(x.detail || "").toLowerCase()) || (x.detail ? String(x.detail).slice(0, 40) : "");
+    writeBetType({ league: lg, market, detail, player: String(x.player || "").slice(0, 40), side: x.side, line: x.line == null ? "" : String(x.line).slice(0, 8) }, x.pick || "");
     $("#f-event").value = String(x.event || "").slice(0, 100);
     if (parseOdds(x.odds)) $("#f-odds").value = String(parseOdds(x.odds));
     if (parseMoney(x.amount)) $("#f-amount").value = String(parseMoney(x.amount));
@@ -872,6 +1121,7 @@ Example: [{"league":"NFL","market":"Spread","pick":"Chiefs -3.5","event":"Bills 
     db.doc("meta/profile").onSnapshot((snap) => { meta = snap.exists ? snap.data() : {}; renderHeader(); }, () => {});
     renderAll();
   }
+  setLeague("NFL");
   updateHints();
   renderAll();
   boot();
