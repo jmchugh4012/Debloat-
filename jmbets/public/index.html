@@ -1,0 +1,1660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>JMbets</title>
+<meta name="description" content="Every bet posted before the game and graded after. Follow JMbets and tail the picks you like.">
+<meta property="og:title" content="JMbets">
+<meta property="og:description" content="Every bet posted before the game and graded after. Follow along and tail the picks you like.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0f1f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: stadium jumbotron. Ticker on top, giant wordmark, LED scoreboard, profit chart, then a column of ticket stubs. One dark world on purpose. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0f1f;
+  --bg-2: #0f1730;
+  --card: #121b38;
+  --card-2: #18244a;
+  --ink: #f5f2ea;
+  --muted: #9ca8c8;
+  --line: #27345e;
+  --accent: #ff6a2b;
+  --gold: #ffc53d;
+  --accent-ink: #1a0b03;
+  --won: #3ddc84;
+  --lost: #ff4d6d;
+  --push: #a7b1cc;
+  --pending: #ffc53d;
+  --tint: rgba(255, 106, 43, 0.12);
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.muted-p { margin: 0; color: var(--muted); font-size: 15px; }
+.ok { color: var(--won); font-size: 13px; }
+html { background: var(--bg); }
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(900px 420px at 12% -8%, rgba(255, 106, 43, 0.22), transparent 70%),
+    radial-gradient(700px 380px at 92% -4%, rgba(255, 197, 61, 0.14), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 96px);
+  background-repeat: no-repeat, no-repeat, repeat;
+  color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  padding: 0 16px 64px;
+}
+.wrap { max-width: 820px; margin: 0 auto; display: grid; gap: 28px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Ticker */
+.ticker { margin: 0 -16px; border-bottom: 1px solid var(--line); background: rgba(255, 106, 43, 0.08); overflow: hidden; white-space: nowrap; font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.02em; }
+.ticker-track { display: inline-flex; gap: 40px; padding: 9px 0 9px 16px; }
+.ticker-track span { display: inline-flex; gap: 10px; align-items: center; color: var(--muted); }
+.ticker-track b { color: var(--ink); font-weight: 700; }
+.ticker-track i { font-style: normal; color: var(--gold); }
+.ticker-track .tl { color: var(--accent); font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track.moving { animation: tick var(--tick-dur, 40s) linear infinite; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+}
+@keyframes tick { to { transform: translateX(-50%); } }
+
+/* Hero */
+.head { display: grid; gap: 20px; padding-top: 28px; }
+.head-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+.who { min-width: 0; display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lost); box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.6); }
+@media (prefers-reduced-motion: no-preference) { .live-dot { animation: pulse 1.8s ease-out infinite; } }
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(255, 77, 109, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0); } }
+.logo { font-family: var(--display); font-weight: 900; font-size: clamp(72px, 19vw, 148px); line-height: 0.82; margin: 0; letter-spacing: -0.01em; text-transform: uppercase; position: relative; }
+.logo span { color: var(--accent); display: inline-block; transform: skewX(-8deg); background: linear-gradient(100deg, var(--accent) 0 45%, #ffd27a 50%, var(--accent) 55% 100%); background-size: 300% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+@media (prefers-reduced-motion: no-preference) { .logo span { animation: sweep 1.6s 0.3s ease-out both; } }
+@keyframes sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
+.logo::after { content: ""; display: block; height: 6px; width: min(260px, 60%); margin-top: 10px; background: linear-gradient(90deg, var(--accent), var(--gold)); transform: skewX(-24deg); border-radius: 2px; }
+.bio { margin: 0; color: var(--ink); opacity: 0.86; max-width: 52ch; font-size: 17px; overflow-wrap: anywhere; }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted); }
+.badge.hot { color: var(--won); border-color: color-mix(in srgb, var(--won) 50%, transparent); background: color-mix(in srgb, var(--won) 12%, transparent); }
+.badge.cold { color: var(--lost); border-color: color-mix(in srgb, var(--lost) 50%, transparent); background: color-mix(in srgb, var(--lost) 12%, transparent); }
+.badge.action { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.btn { border: 1px solid var(--line); background: var(--card-2); padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: linear-gradient(135deg, var(--accent), #ff8a3d); color: var(--accent-ink); border-color: transparent; box-shadow: 0 6px 20px -8px rgba(255, 106, 43, 0.8); }
+.btn.primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -8px rgba(255, 106, 43, 0.95); }
+.btn.on { background: var(--tint); color: var(--accent); border-color: var(--accent); }
+.btn.small { padding: 5px 11px; font-size: 12px; }
+.btn.danger { color: var(--lost); border-color: color-mix(in srgb, var(--lost) 50%, transparent); }
+.btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.link { background: none; border: 0; padding: 0; color: var(--gold); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Scoreboard */
+.board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1.35fr) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, var(--card-2), var(--card)); overflow: hidden; box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+.stat { padding: 16px 18px 14px; display: grid; gap: 2px; border-left: 1px solid var(--line); min-width: 0; }
+.stat:first-child { border-left: 0; }
+.stat .v { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 4.4vw, 40px); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow-wrap: normal; text-shadow: 0 0 22px rgba(255, 255, 255, 0.12); }
+.stat .v.pos { text-shadow: 0 0 22px rgba(61, 220, 132, 0.35); }
+.stat .v.neg { text-shadow: 0 0 22px rgba(255, 77, 109, 0.35); }
+.stat .k { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.pos { color: var(--won); } .neg { color: var(--lost); }
+@media (max-width: 560px) {
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat .v { font-size: clamp(24px, 7.4vw, 34px); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* Profit chart */
+.chart-card { border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: 16px 18px 12px; display: grid; gap: 8px; position: relative; }
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.chart-head h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: 0.03em; }
+.chart-head span { font-size: 13px; color: var(--muted); }
+.chart-box { position: relative; }
+.chart-box svg { display: block; width: 100%; height: 180px; overflow: visible; }
+.chart-empty { font-size: 14px; color: var(--muted); padding: 28px 0; text-align: center; }
+.tip { position: absolute; pointer-events: none; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.4; min-width: 160px; max-width: 240px; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.9); }
+.tip b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.tip .t1 { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+
+.leagues { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.leagues table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.leagues th { text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 10px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--card-2); }
+.leagues td { padding: 10px 16px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.leagues tr:last-child td { border-bottom: 0; }
+.leagues tbody tr:hover td { background: rgba(255, 255, 255, 0.025); }
+.leagues td:first-child { font-family: var(--display); font-weight: 800; font-size: 19px; text-transform: uppercase; letter-spacing: 0.02em; }
+.leagues .num { text-align: right; }
+
+.followers { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
+.faces { display: flex; }
+.faces img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--bg); margin-left: -8px; background: var(--line); }
+.faces img:first-child { margin-left: 0; }
+
+.notice { font-size: 14px; color: var(--ink); background: var(--tint); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 8px; padding: 10px 14px; }
+.mine { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline; font-size: 14px; color: var(--muted); background: linear-gradient(90deg, rgba(255, 197, 61, 0.12), transparent); border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); border-radius: 10px; padding: 12px 16px; }
+.mine b { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+.mine b.pos { color: var(--won); } .mine b.neg { color: var(--lost); }
+
+/* Panels */
+.panel { background: var(--card); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: 12px; padding: 20px; display: grid; gap: 16px; }
+.panel h2 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 30px; line-height: 1; margin: 0; letter-spacing: 0.02em; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.grid .full { grid-column: 1 / -1; }
+@media (max-width: 520px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+label { display: grid; gap: 5px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+input, select, textarea { text-transform: none; letter-spacing: normal; font-size: 16px; font-weight: 500; border: 1px solid var(--line); background: var(--bg-2); border-radius: 8px; padding: 9px 11px; width: 100%; min-width: 0; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(255, 106, 43, 0.2); }
+select option, select optgroup { background: var(--bg-2); color: var(--ink); }
+textarea { resize: vertical; min-height: 64px; }
+.hint { font-size: 12px; color: var(--gold); font-family: var(--mono); text-transform: none; letter-spacing: 0; font-weight: 500; }
+.form-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.err { color: var(--lost); font-size: 13px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { border: 1px solid var(--line); background: var(--bg-2); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.seg button[aria-pressed="true"] { border-color: var(--gold); background: var(--gold); color: var(--accent-ink); }
+
+.prop-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 520px) { .prop-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .prop-who { grid-column: 1 / -1; } }
+optgroup { font-style: normal; font-weight: 700; }
+.pp { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.legs { display: grid; gap: 12px; }
+.legs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.leg-list { display: grid; gap: 12px; }
+.leg { border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 14px; background: var(--bg-2); display: grid; gap: 12px; }
+.leg-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.leg-head b { font-family: var(--display); font-weight: 900; font-size: 20px; text-transform: uppercase; letter-spacing: 0.04em; }
+.leg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.leg-grid .wide { grid-column: 1 / -1; }
+.leg-prop { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 560px) { .leg-prop { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .leg-prop > .pp { grid-column: 1 / -1; } }
+.add-leg { justify-self: start; border-style: dashed; color: var(--gold); }
+.legs-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.legs-list li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 7px 10px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.legs-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.legs-list .lg { font-family: var(--display); font-weight: 900; font-size: 13px; letter-spacing: 0.06em; color: var(--accent); margin-right: 8px; }
+.legs-list .lo { font-family: var(--mono); font-size: 13px; color: var(--gold); white-space: nowrap; }
+
+/* Screenshot import */
+.import { border: 2px dashed var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; background: var(--bg-2); }
+.import.drag { border-color: var(--accent); background: var(--tint); }
+.import-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.import p { margin: 0; font-size: 14px; color: var(--muted); }
+.import .status { font-size: 13px; font-family: var(--mono); color: var(--gold); }
+.import .status.bad { color: var(--lost); font-family: var(--body); }
+.import textarea { min-height: 44px; font-size: 14px; }
+.thumb { max-height: 72px; border-radius: 6px; border: 1px solid var(--line); }
+.found { display: grid; gap: 6px; }
+.found button { text-align: left; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 9px 12px; font-size: 14px; }
+.found button:hover { border-color: var(--accent); }
+.found button span:last-child { font-family: var(--mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.found button[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.drop-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(10, 15, 31, 0.82); display: grid; place-items: center; padding: 16px; pointer-events: none; }
+.drop-overlay div { border: 3px dashed var(--accent); border-radius: 16px; padding: 44px 28px; background: var(--card); font-family: var(--display); font-weight: 900; font-size: 34px; text-transform: uppercase; text-align: center; color: var(--accent); }
+
+/* Tabs */
+.bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); }
+.tabs button { border: 0; background: none; padding: 7px 16px; border-radius: 999px; font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+/* Ticket stubs */
+.slips { display: grid; gap: 14px; }
+.slip { --st: var(--pending); position: relative; display: grid; grid-template-columns: 132px minmax(0, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.slip.won { --st: var(--won); } .slip.lost { --st: var(--lost); } .slip.push { --st: var(--push); }
+.stub { position: relative; border-right: 2px dashed var(--line); padding: 16px 12px; display: grid; align-content: center; gap: 4px; text-align: center; background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--st) 16%, transparent), transparent 70%), var(--card-2); }
+.stub::before, .stub::after { content: ""; position: absolute; right: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); }
+.stub::before { top: -11px; } .stub::after { bottom: -11px; }
+.stub .league { justify-self: center; font-family: var(--display); font-weight: 900; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: var(--st); color: var(--accent-ink); }
+.slip:not(.pending) .stub .odds { color: var(--st); }
+.stub .odds { font-family: var(--display); font-weight: 900; font-size: 38px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stub .imp { font-family: var(--mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slip-body { padding: 16px 18px; display: grid; gap: 6px; min-width: 0; position: relative; }
+.slip-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; min-height: 22px; }
+.meta { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; overflow-wrap: anywhere; }
+.pick { font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; letter-spacing: 0.01em; }
+.event { color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+.money { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.money b { font-family: var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; letter-spacing: 0; margin-left: 4px; }
+.money b.pos { color: var(--won); } .money b.neg { color: var(--lost); }
+.note { font-size: 15px; border-left: 3px solid var(--gold); padding-left: 12px; margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); opacity: 0.9; }
+.chip { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; font-family: var(--mono); }
+.chip.pending { color: var(--pending); }
+.chip.pending::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.stamp { flex: none; font-family: var(--display); font-weight: 900; font-size: 26px; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--st); border: 3px solid var(--st); border-radius: 6px; padding: 4px 10px 2px; transform: rotate(-8deg); opacity: 0.92; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--st) 25%, transparent); margin: -4px -2px 0 0; }
+.slip-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.tailers { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.tailers .faces img { width: 24px; height: 24px; border-color: var(--card); }
+.grade { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.result { font-family: var(--mono); font-weight: 700; }
+.stake { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.stake input { width: 88px; padding: 5px 8px; font-size: 13px; font-family: var(--mono); }
+.copybox { flex-basis: 100%; font-family: var(--mono); font-size: 12px; }
+@media (prefers-reduced-motion: no-preference) {
+  .slip { transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+  .slip:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--st) 55%, var(--line)); box-shadow: 0 16px 30px -18px rgba(0, 0, 0, 0.9); }
+}
+@media (max-width: 480px) {
+  .slip { grid-template-columns: minmax(0, 1fr); }
+  .stub { border-right: 0; border-bottom: 2px dashed var(--line); grid-auto-flow: column; justify-content: start; align-items: center; gap: 14px; text-align: left; padding: 12px 18px; }
+  .stub::before, .stub::after { right: auto; top: auto; bottom: -11px; }
+  .stub::before { left: -11px; } .stub::after { right: -11px; }
+  .stub .odds { font-size: 30px; }
+  .pick { font-size: 28px; }
+}
+
+.empty { text-align: center; padding: 44px 20px; border: 2px dashed var(--line); border-radius: 12px; color: var(--muted); display: grid; gap: 6px; background: rgba(18, 27, 56, 0.5); }
+.empty strong { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 30px; color: var(--ink); letter-spacing: 0.02em; }
+.foot { font-size: 12px; color: var(--muted); text-align: center; }
+</style>
+<script>window.jmbReady = new Promise((resolve) => { window.__jmbResolve = resolve; });</script>
+<script type="module" src="backend.js"></script>
+</head>
+<body>
+<div class="drop-overlay" id="drop-overlay" hidden><div>Drop your screenshot to import the bet</div></div>
+<div class="ticker" aria-label="Open bets"><div class="ticker-track" id="ticker-track"><span><b class="tl">JMBETS</b> every bet posted before the game</span></div></div>
+<div class="wrap">
+  <header class="head">
+    <div class="head-top">
+      <div class="who">
+        <div class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Live card · every bet on the record</div>
+        <h1 class="logo">JM<span>bets</span></h1>
+        <p class="bio" id="bio"></p>
+        <div class="badges" id="badges"></div>
+      </div>
+      <div class="actions" id="head-actions"></div>
+    </div>
+    <div class="board" aria-label="Record">
+      <div class="stat"><span class="v" id="s-record">0-0-0</span><span class="k">W-L-P</span></div>
+      <div class="stat"><span class="v" id="s-profit">$0.00</span><span class="k">Profit</span></div>
+      <div class="stat"><span class="v" id="s-wager">$0.00</span><span class="k">Wagered</span></div>
+      <div class="stat"><span class="v" id="s-roi">—</span><span class="k">ROI</span></div>
+    </div>
+    <section class="chart-card" aria-label="Running profit">
+      <div class="chart-head"><h2>Running profit</h2><span id="chart-sub">Graded bets, oldest to newest</span></div>
+      <div class="chart-box" id="chart"><div class="chart-empty">The chart fills in as bets are graded.</div></div>
+    </section>
+    <div class="leagues" id="leagues" hidden></div>
+    <div class="mine" id="mine" hidden></div>
+    <div class="followers" id="followers"></div>
+    <div class="notice" id="notice" hidden></div>
+  </header>
+
+  <section class="panel" id="signin-panel" hidden>
+    <h2>Sign in</h2>
+    <p class="muted-p" id="si-why">Sign in to follow JMbets, tail bets and track how your tails do.</p>
+    <div class="form-foot"><button class="btn primary" type="button" id="si-google">Continue with Google</button></div>
+    <p class="muted-p" id="si-inapp" hidden>You're in an app's built-in browser, where Google sign-in doesn't work. Use the email link below, or open this page in Safari or Chrome.</p>
+    <form id="si-email-form" class="grid" novalidate>
+      <label class="full">Or get a sign-in link by email<input id="si-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+      <div class="form-foot full"><button class="btn" type="submit" id="si-email-btn">Email me a link</button><button class="btn" type="button" id="si-cancel">Cancel</button><span id="si-msg"></span></div>
+    </form>
+  </section>
+
+  <section class="panel" id="profile-panel" hidden>
+    <h2>Edit bio</h2>
+    <form id="profile-form" class="grid">
+      <label class="full">Short bio<textarea id="pf-bio" maxlength="200" placeholder="What you bet and how you size it"></textarea></label>
+      <div class="form-foot full"><button class="btn primary" type="submit">Save bio</button><button class="btn" type="button" id="pf-cancel">Cancel</button></div>
+    </form>
+  </section>
+
+  <section class="panel" id="post-panel" hidden>
+    <h2 id="post-title">Post a bet</h2>
+    <div class="import" id="import" hidden>
+      <div class="import-row">
+        <label class="btn primary" for="imp-file" style="text-transform:none;letter-spacing:normal;color:var(--accent-ink);font-size:14px">Import from screenshot</label>
+        <input class="sr" type="file" id="imp-file" accept="image/png,image/jpeg,image/webp,image/gif">
+        <img class="thumb" id="imp-thumb" alt="Your screenshot" hidden>
+        <button class="btn small" type="button" id="imp-stop" hidden>Stop</button>
+        <span class="status" id="imp-status"></span>
+      </div>
+      <p>Screenshot a bet slip or “My Bets” from DraftKings, FanDuel or any sportsbook. You can also drop the image anywhere on this page or paste it, or paste the bet text below. It fills in the form and you check it before posting.</p>
+      <div class="import-row">
+        <textarea id="imp-text" placeholder="Or paste bet text, e.g. from a share link" aria-label="Bet text to import"></textarea>
+        <button class="btn small" type="button" id="imp-text-go">Fill from text</button>
+      </div>
+      <div class="found" id="imp-found" hidden></div>
+    </div>
+    <form id="post-form" class="grid" novalidate>
+      <label>League<select id="f-league-sel"></select></label>
+      <label>Bet type<select id="f-market"></select></label>
+      <label class="full" id="f-league-wrap" hidden>League name<input id="f-league" maxlength="20" placeholder="e.g. KBO, CFL, Euroleague"></label>
+      <label class="full" id="f-detail-wrap" hidden><span id="f-detail-label">Type</span><select id="f-detail"></select></label>
+      <div class="full prop-row" id="f-prop" hidden>
+        <div class="prop-who" id="f-who"></div>
+        <label>Over / Under<select id="f-side"><option>Over</option><option>Under</option><option>Yes</option><option>No</option></select></label>
+        <label id="f-line-wrap">Line<input id="f-line" inputmode="decimal" maxlength="8" placeholder="e.g. 74.5"></label>
+      </div>
+      <div class="full legs" id="f-legs" hidden>
+        <div class="legs-head"><span class="eyebrow">Legs</span><span class="hint" id="f-legs-hint"></span></div>
+        <div class="leg-list" id="f-leg-list"></div>
+        <button class="btn small add-leg" type="button" id="f-add-leg">+ Add leg</button>
+      </div>
+      <label class="full" id="f-pick-wrap">Your pick <span class="hint" id="f-pick-hint"></span><input id="f-pick" maxlength="120" placeholder="Chiefs -3.5" required></label>
+      <label class="full">Game or event<input id="f-event" maxlength="100" placeholder="Bills @ Chiefs"></label>
+      <label>Odds <span class="hint" id="f-odds-hint">−110 → 52.4% implied</span><input id="f-odds" inputmode="numeric" placeholder="-110" value="-110"></label>
+      <label>Amount ($) <span class="hint" id="f-amt-hint">to win $90.91</span><input id="f-amount" inputmode="decimal" placeholder="100" value="100"></label>
+      <label class="full">Game time<input id="f-time" type="datetime-local"></label>
+      <div class="full" style="display:grid;gap:4px"><span class="eyebrow">Result</span>
+        <div class="seg" id="f-status">
+          <button type="button" data-s="pending" aria-pressed="true">Open</button>
+          <button type="button" data-s="won" aria-pressed="false">Won</button>
+          <button type="button" data-s="lost" aria-pressed="false">Lost</button>
+          <button type="button" data-s="push" aria-pressed="false">Push</button>
+        </div>
+      </div>
+      <label class="full">Why (optional)<textarea id="f-note" maxlength="500" placeholder="Short reasoning for your followers"></textarea></label>
+      <div class="form-foot full"><button class="btn primary" type="submit" id="f-submit">Post bet</button><button class="btn" type="button" id="f-cancel" hidden>Cancel edit</button><span class="err" id="f-err"></span></div>
+    </form>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <div class="bar">
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-f="open" aria-selected="true">Open</button>
+        <button role="tab" data-f="settled" aria-selected="false">Settled</button>
+        <button role="tab" data-f="all" aria-selected="false">All</button>
+        <button role="tab" data-f="mine" aria-selected="false" id="tab-mine" hidden>My tails</button>
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="slips" id="slips">
+      <div class="empty"><strong>Loading bets</strong><span>Open bets show up here as soon as they're posted.</span></div>
+    </div>
+  </section>
+
+  <p class="foot">For entertainment. Bet responsibly. If gambling stops being fun, call 1-800-GAMBLER.</p>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k === "value") el.value = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const k of kids.flat()) if (k != null) el.append(k);
+    return el;
+  };
+
+  let db = null, user = null, myId = null, isAdmin = false, canFollow = null;
+  let bets = [], fans = {}, meta = {}, filter = "open", confirmDelete = null, editing = null, copied = null;
+  let writing = false, formStatus = "pending";
+
+  // ---- betting math -----------------------------------------------------
+  const parseOdds = (s) => {
+    const n = Number(String(s).replace(/[−–]/g, "-").replace(/\s/g, ""));
+    if (!Number.isFinite(n) || Math.abs(n) < 100) return null;
+    return Math.round(n);
+  };
+  const parseMoney = (s) => { const n = Number(String(s).replace(/[$,\s]/g, "")); return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null; };
+  const fmtOdds = (o) => (o > 0 ? "+" + o : "−" + Math.abs(o));
+  const implied = (o) => (o > 0 ? 100 / (o + 100) : -o / (-o + 100));
+  const toWin = (o, amt) => (o > 0 ? amt * o / 100 : amt * 100 / -o);
+  const profitOf = (status, odds, amt) => status === "won" ? toWin(odds, amt) : status === "lost" ? -amt : 0;
+  const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const fmt$ = (n) => usd.format(Math.abs(n));
+  const fmtP = (n) => (n > 0.004 ? "+" : n < -0.004 ? "−" : "") + fmt$(n);
+  const cls = (n) => (n > 0.004 ? "pos" : n < -0.004 ? "neg" : "");
+
+  const fmtTime = (s) => {
+    if (!s) return "";
+    const d = new Date(s);
+    if (isNaN(d)) return "";
+    return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  };
+  const toLocalInput = (s) => {
+    const d = new Date(s); if (!s || isNaN(d)) return "";
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+
+  function summarize(list) {
+    const s = { w: 0, l: 0, p: 0, wagered: 0, risked: 0, profit: 0 };
+    for (const x of list) {
+      if (x.status === "pending") continue;
+      s[x.status[0]]++;
+      s.wagered += x.amount;
+      if (x.status !== "push") s.risked += x.amount;
+      s.profit += x.profit;
+    }
+    s.roi = s.risked ? (s.profit / s.risked) * 100 : null;
+    return s;
+  }
+
+  const myTails = () => fans[myId]?.tails || {};
+  const tailStake = (bet, v) => (typeof v === "number" && v > 0 ? v : bet.amount);
+
+  // ---- rendering --------------------------------------------------------
+  function renderHeader() {
+    $("#bio").textContent = meta.bio || DEFAULT_BIO;
+    renderBadges();
+    renderTicker();
+    renderChart();
+
+    const s = summarize(bets);
+    $("#s-record").textContent = `${s.w}-${s.l}-${s.p}`;
+    const sp = $("#s-profit"); sp.textContent = fmtP(s.profit); sp.className = "v " + cls(s.profit);
+    $("#s-wager").textContent = fmt$(s.wagered);
+    const sr = $("#s-roi"); sr.textContent = s.roi == null ? "—" : (s.roi > 0 ? "+" : "") + s.roi.toFixed(1) + "%"; sr.className = "v " + cls(s.roi || 0);
+
+    // per-league table
+    const byLeague = {};
+    for (const b of bets) (byLeague[b.league] ||= []).push(b);
+    const rows = Object.entries(byLeague).map(([lg, list]) => ({ lg, s: summarize(list), open: list.filter((b) => b.status === "pending").length }))
+      .sort((a, b) => b.s.wagered - a.s.wagered || a.lg.localeCompare(b.lg));
+    const lbox = $("#leagues");
+    lbox.hidden = rows.length === 0;
+    if (rows.length) {
+      lbox.replaceChildren(h("table", {},
+        h("thead", {}, h("tr", {}, h("th", { text: "League" }), h("th", { text: "W-L-P" }), h("th", { class: "num", text: "Open" }), h("th", { class: "num", text: "Wagered" }), h("th", { class: "num", text: "Profit" }), h("th", { class: "num", text: "ROI" }))),
+        h("tbody", {}, rows.map(({ lg, s, open }) => h("tr", {},
+          h("td", { text: lg }), h("td", { text: `${s.w}-${s.l}-${s.p}` }), h("td", { class: "num", text: String(open) }),
+          h("td", { class: "num", text: fmt$(s.wagered) }), h("td", { class: "num " + cls(s.profit), text: fmtP(s.profit) }),
+          h("td", { class: "num " + cls(s.roi || 0), text: s.roi == null ? "—" : (s.roi > 0 ? "+" : "") + s.roi.toFixed(1) + "%" }),
+        ))),
+      ));
+    }
+
+    // follower's own tail record
+    const mine = $("#mine");
+    const tails = myTails();
+    const tailed = bets.filter((b) => tails[b.id]).map((b) => {
+      const amt = tailStake(b, tails[b.id]);
+      return { ...b, amount: amt, profit: profitOf(b.status, b.odds, amt) };
+    });
+    mine.hidden = isAdmin || !myId || !tailed.length;
+    if (!mine.hidden) {
+      const t = summarize(tailed);
+      const open = tailed.filter((b) => b.status === "pending");
+      mine.replaceChildren(
+        h("span", {}, "Your tails: ", h("b", { text: `${t.w}-${t.l}-${t.p}` })),
+        h("span", {}, "Profit ", h("b", { class: cls(t.profit), text: fmtP(t.profit) })),
+        h("span", {}, "Wagered ", h("b", { text: fmt$(t.wagered) })),
+        open.length ? h("span", {}, "Open ", h("b", { text: `${open.length} · ${fmt$(open.reduce((a, b) => a + b.amount, 0))}` })) : null,
+      );
+    }
+    $("#tab-mine").hidden = isAdmin || !myId;
+
+    const acts = $("#head-actions"); acts.replaceChildren();
+    if (isAdmin) {
+      acts.append(
+        h("button", { class: "btn", type: "button", text: "Edit bio", onclick: openProfile }),
+        h("button", { class: "btn primary", type: "button", text: $("#post-panel").hidden ? "Post a bet" : "Close", onclick: togglePost }),
+      );
+    } else if (db && myId) {
+      const following = !!fans[myId]?.following;
+      acts.append(h("button", {
+        class: "btn " + (following ? "on" : "primary"), type: "button",
+        text: following ? "Following ✓" : "Follow", disabled: writing || canFollow === false,
+        "aria-pressed": following ? "true" : "false", onclick: toggleFollow,
+      }));
+    } else if (db && auth) {
+      acts.append(h("button", { class: "btn primary", type: "button", text: "Sign in to follow", onclick: () => openSignIn() }));
+    }
+    if (auth && myId) acts.append(h("button", { class: "link", type: "button", text: "Sign out", onclick: doSignOut }));
+  }
+
+  async function renderFollowers() {
+    const box = $("#followers");
+    const ids = Object.keys(fans).filter((id) => fans[id]?.following);
+    box.replaceChildren();
+    if (!db) return;
+    if (!ids.length) { box.append(h("span", { text: isAdmin ? "No followers yet. Share this page so people can follow you." : "No followers yet. Be the first." })); return; }
+    const faces = h("div", { class: "faces" });
+    box.append(faces, h("span", { text: ids.length === 1 ? "1 follower" : `${ids.length} followers` }));
+    if (user) {
+      const shown = ids.slice(0, 8);
+      const ps = await user.profiles(shown);
+      for (const id of shown) faces.append(h("img", { src: ps[id].avatarUrl, alt: ps[id].name || "Follower", title: ps[id].name || "Follower" }));
+    }
+  }
+
+  async function renderSlips() {
+    const box = $("#slips");
+    for (const b of document.querySelectorAll("#tabs button")) b.setAttribute("aria-selected", String(b.dataset.f === filter));
+    const tails = myTails();
+    const list = bets.filter((b) =>
+      filter === "all" ? true :
+      filter === "open" ? b.status === "pending" :
+      filter === "settled" ? b.status !== "pending" :
+      !!tails[b.id]);
+    $("#count").textContent = list.length === 1 ? "1 bet" : `${list.length} bets`;
+
+    if (!db) {
+      box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: "Couldn't load bets" }), h("span", { text: "Check your connection and reload the page." })));
+      return;
+    }
+    if (!list.length) {
+      const msg = !bets.length
+        ? (isAdmin ? ["No bets yet", "Use “Post a bet” above. Followers see it right away."] : ["No bets posted yet", "Follow now and new bets will appear here as soon as they're posted."])
+        : filter === "open" ? ["No open bets", "Everything posted so far has been graded. Check the Settled tab."]
+        : filter === "mine" ? ["You haven't tailed anything", "Hit “Tail” on an open bet to add it to your tracker."]
+        : ["Nothing settled yet", "Bets show up here once they're graded won, lost or push."];
+      box.replaceChildren(h("div", { class: "empty" }, h("strong", { text: msg[0] }), h("span", { text: msg[1] })));
+      return;
+    }
+
+    const tailIds = {};
+    for (const [uid, f] of Object.entries(fans)) for (const [bid, on] of Object.entries(f?.tails || {})) if (on) (tailIds[bid] ||= []).push(uid);
+    const allIds = [...new Set(Object.values(tailIds).flat())];
+    const ps = user && allIds.length ? await user.profiles(allIds) : {};
+
+    box.replaceChildren(...list.map((b) => slip(b, tailIds[b.id] || [], ps)));
+  }
+
+  const titleOf = (b) => (b.legs?.length ? `${b.legs.length}-leg ${b.market === "Teaser" ? "teaser" : b.market === "Same game parlay" ? "same game parlay" : "parlay"}` : b.pick);
+  const slipText = (b) => `${b.league} · ${b.pick} ${fmtOdds(b.odds)}${b.event ? " · " + b.event : ""}${b.startsAt ? " · " + fmtTime(b.startsAt) : ""} · ${fmt$(b.amount)} (JMbets)`;
+
+  function slip(b, tailers, ps) {
+    const st = b.status;
+    const label = { pending: "Open", won: "Won", lost: "Lost", push: "Push" }[st];
+
+    const money = h("div", { class: "money" },
+      h("span", {}, "Amount ", h("b", { text: fmt$(b.amount) })),
+      st === "pending"
+        ? h("span", {}, "To win ", h("b", { text: fmt$(toWin(b.odds, b.amount)) }))
+        : h("span", {}, "Profit ", h("b", { class: cls(b.profit), text: fmtP(b.profit) })),
+    );
+
+    const foot = h("div", { class: "slip-foot" });
+    const tailBox = h("div", { class: "tailers" });
+    if (tailers.length) {
+      const faces = h("div", { class: "faces" });
+      for (const id of tailers.slice(0, 5)) faces.append(h("img", { src: ps[id]?.avatarUrl || "", alt: ps[id]?.name || "Someone", title: ps[id]?.name || "Someone" }));
+      tailBox.append(faces);
+    }
+    tailBox.append(h("span", { text: tailers.length ? `${tailers.length} tailing` : "No one tailing yet" }));
+    foot.append(tailBox);
+
+    const right = h("div", { class: "grade" });
+    const copyBtn = h("button", { class: "btn small", type: "button", text: copied === b.id ? "Copied ✓" : "Copy bet", onclick: () => copyBet(b) });
+    if (isAdmin) {
+      if (confirmDelete === b.id) {
+        right.append(
+          h("span", { class: "err", text: "Delete this bet?" }),
+          h("button", { class: "btn small danger", type: "button", text: "Delete", onclick: () => removeBet(b.id) }),
+          h("button", { class: "btn small", type: "button", text: "Keep", onclick: () => { confirmDelete = null; renderSlips(); } }),
+        );
+      } else {
+        for (const s of ["won", "lost", "push"]) if (s !== st) right.append(h("button", { class: "btn small", type: "button", text: s[0].toUpperCase() + s.slice(1), onclick: () => grade(b.id, s) }));
+        if (st !== "pending") right.append(h("button", { class: "btn small", type: "button", text: "Reopen", onclick: () => grade(b.id, "pending") }));
+        right.append(
+          h("button", { class: "link", type: "button", text: "Edit", onclick: () => startEdit(b) }),
+          h("button", { class: "link", type: "button", text: "Delete", onclick: () => { confirmDelete = b.id; renderSlips(); } }),
+        );
+      }
+    } else if (myId) {
+      const tv = myTails()[b.id];
+      if (tv) {
+        const stake = tailStake(b, tv);
+        const inp = h("input", { id: "stake-" + b.id, inputmode: "decimal", value: stake.toFixed(2), "aria-label": "Your amount", disabled: writing || st !== "pending" });
+        inp.addEventListener("change", () => { const v = parseMoney(inp.value); if (v) setTail(b.id, v); else inp.value = stake.toFixed(2); });
+        right.append(
+          h("label", { class: "stake", for: "stake-" + b.id }, "Your $", inp),
+          st === "pending" ? h("button", { class: "btn small on", type: "button", text: "Tailing ✓", title: "Click to stop tailing", "aria-pressed": "true", disabled: writing, onclick: () => setTail(b.id, null) }) : null,
+        );
+      } else if (st === "pending") {
+        right.append(h("button", { class: "btn small primary", type: "button", text: `Tail ${fmt$(b.amount)}`, disabled: writing || canFollow === false, onclick: () => { copyBet(b); setTail(b.id, b.amount); } }));
+      }
+      right.append(copyBtn);
+    } else {
+      if (auth && st === "pending") right.append(h("button", { class: "btn small primary", type: "button", text: "Sign in to tail", onclick: () => openSignIn("Sign in to tail this bet and track how your tails do.") }));
+      right.append(copyBtn);
+    }
+    foot.append(right);
+    if (copied === "fail:" + b.id) foot.append(h("input", { class: "copybox", readonly: true, value: slipText(b), "aria-label": "Bet details to copy", onfocus: (e) => e.target.select() }));
+
+    const when = fmtTime(b.startsAt);
+    return h("article", { class: "slip " + st },
+      h("div", { class: "stub" },
+        h("span", { class: "league", text: b.league }),
+        h("span", { class: "odds", text: fmtOdds(b.odds) }),
+        h("span", { class: "imp", text: (implied(b.odds) * 100).toFixed(1) + "% implied" }),
+      ),
+      h("div", { class: "slip-body" },
+        h("div", { class: "slip-top" },
+          h("span", { class: "meta", text: [b.market, b.detail, when].filter(Boolean).join(" · ") }),
+          st === "pending" ? h("span", { class: "chip pending", text: "Open" }) : h("span", { class: "stamp", text: label }),
+        ),
+        h("div", { class: "pick", text: titleOf(b) }),
+        b.legs?.length ? h("ul", { class: "legs-list" }, b.legs.map((l) => h("li", {},
+          h("span", {}, b.market === "Parlay" ? h("span", { class: "lg", text: l.league }) : null, l.pick || ""),
+          l.odds ? h("span", { class: "lo", text: fmtOdds(l.odds) }) : null))) : null,
+        b.event ? h("div", { class: "event", text: b.event }) : null,
+        money,
+        b.note ? h("p", { class: "note", text: b.note }) : null,
+        foot,
+      ),
+    );
+  }
+
+  // ---- hero extras: badges, ticker, profit chart ---------------------------
+  const DEFAULT_BIO = "Every bet goes up before the game and gets graded after the final whistle. Wins and losses both stay on the board, so the record is the real record. Tail what you like.";
+  const byTimeAsc = (a, b) => String(a.settledAt || a.postedAt || "").localeCompare(String(b.settledAt || b.postedAt || ""));
+
+  function renderBadges() {
+    const box = $("#badges"); box.replaceChildren();
+    const graded = bets.filter((b) => b.status === "won" || b.status === "lost").sort(byTimeAsc).reverse();
+    if (graded.length) {
+      const first = graded[0].status; let n = 0;
+      for (const b of graded) { if (b.status !== first) break; n++; }
+      if (n >= 2) box.append(h("span", { class: "badge " + (first === "won" ? "hot" : "cold"), text: `${first === "won" ? "W" : "L"}${n} streak` }));
+      const last10 = graded.slice(0, 10), w = last10.filter((b) => b.status === "won").length;
+      box.append(h("span", { class: "badge", text: `Last ${last10.length}: ${w}-${last10.length - w}` }));
+    }
+    const open = bets.filter((b) => b.status === "pending");
+    if (open.length) box.append(h("span", { class: "badge action", text: `${open.length} open · ${fmt$(open.reduce((a, b) => a + b.amount, 0))} in action` }));
+  }
+
+  function renderTicker() {
+    const track = $("#ticker-track");
+    const open = bets.filter((b) => b.status === "pending").slice(0, 12);
+    const recent = bets.filter((b) => b.status !== "pending").sort(byTimeAsc).reverse().slice(0, 6);
+    const items = [
+      ...open.map((b) => h("span", {}, h("b", { class: "tl", text: b.league }), h("b", { text: titleOf(b) }), h("i", { text: fmtOdds(b.odds) }), document.createTextNode(fmt$(b.amount)))),
+      ...recent.map((b) => h("span", {}, h("b", { class: "tl", text: b.league }), document.createTextNode(titleOf(b)), h("b", { class: cls(b.profit), text: `${b.status.toUpperCase()} ${fmtP(b.profit)}` }))),
+    ];
+    if (!items.length) items.push(h("span", {}, h("b", { class: "tl", text: "JMBETS" }), document.createTextNode("New bets show up here the moment they're posted")));
+    const s = summarize(bets);
+    items.push(h("span", {}, h("b", { class: "tl", text: "RECORD" }), h("b", { text: `${s.w}-${s.l}-${s.p}` }), h("b", { class: cls(s.profit), text: fmtP(s.profit) })));
+    // Two copies side by side so the scroll loops seamlessly.
+    const copy = () => items.map((el) => el.cloneNode(true));
+    track.replaceChildren(...copy(), ...copy());
+    track.classList.add("moving");
+    track.style.setProperty("--tick-dur", Math.max(24, items.length * 7) + "s");
+  }
+
+  function niceStep(range) {
+    const raw = range / 3, mag = 10 ** Math.floor(Math.log10(raw || 1)), n = raw / mag;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+  }
+  function renderChart() {
+    const box = $("#chart");
+    const graded = bets.filter((b) => b.status !== "pending").sort(byTimeAsc);
+    $("#chart-sub").textContent = graded.length ? `${graded.length} graded bet${graded.length === 1 ? "" : "s"}, oldest to newest` : "Graded bets, oldest to newest";
+    if (!graded.length) { box.replaceChildren(h("div", { class: "chart-empty", text: "The chart fills in as bets are graded." })); return; }
+    let run = 0;
+    const pts = [{ y: 0, bet: null }, ...graded.map((b) => ({ y: (run += b.profit), bet: b }))];
+    const W = Math.max(280, Math.round(box.clientWidth || 760)), H = 180, L = 56, R = 72, T = 12, B = 22;
+    const ys = pts.map((p) => p.y);
+    let lo = Math.min(0, ...ys), hi = Math.max(0, ...ys);
+    if (hi - lo < 1) { hi += 1; lo -= 1; }
+    const step = niceStep(hi - lo);
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const x = (i) => L + (pts.length === 1 ? 0 : (i / (pts.length - 1)) * (W - L - R));
+    const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+    const NS = "http://www.w3.org/2000/svg";
+    const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: "img", "aria-label": `Running profit, now ${fmtP(run)}` });
+    svg.style.height = "180px";
+    const defs = el("defs", {});
+    const grad = el("linearGradient", { id: "pf", x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.append(el("stop", { offset: "0%", "stop-color": "#ffc53d", "stop-opacity": "0.35" }), el("stop", { offset: "100%", "stop-color": "#ffc53d", "stop-opacity": "0" }));
+    defs.append(grad); svg.append(defs);
+    for (let v = lo; v <= hi + 1e-9; v += step) {
+      const yy = y(v);
+      svg.append(el("line", { x1: L, x2: W - R, y1: yy, y2: yy, stroke: v === 0 ? "#9ca8c8" : "#27345e", "stroke-width": 1, "stroke-dasharray": v === 0 ? "4 4" : "", "vector-effect": "non-scaling-stroke" }));
+      const t = el("text", { x: L - 8, y: yy + 4, "text-anchor": "end", fill: "#9ca8c8", "font-size": 11, "font-family": "JetBrains Mono, monospace" });
+      t.textContent = (v < 0 ? "−$" : "$") + Math.abs(Math.round(v)).toLocaleString();
+      svg.append(t);
+    }
+    const line = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.y).toFixed(1)}`).join("");
+    svg.append(el("path", { d: `${line}L${x(pts.length - 1)},${y(lo)}L${x(0)},${y(lo)}Z`, fill: "url(#pf)", stroke: "none" }));
+    svg.append(el("path", { d: line, fill: "none", stroke: "#ffc53d", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", "vector-effect": "non-scaling-stroke" }));
+    const ex = x(pts.length - 1), ey = y(run);
+    svg.append(el("circle", { cx: ex, cy: ey, r: 5, fill: "#ffc53d", stroke: "#121b38", "stroke-width": 2 }));
+    const endT = el("text", { x: ex + 10, y: ey + 4, fill: run > 0.004 ? "#3ddc84" : run < -0.004 ? "#ff4d6d" : "#f5f2ea", "font-size": 13, "font-weight": 700, "font-family": "JetBrains Mono, monospace" });
+    endT.textContent = fmtP(run); svg.append(endT);
+    const cross = el("line", { y1: T, y2: H - B, stroke: "#9ca8c8", "stroke-width": 1, visibility: "hidden", "vector-effect": "non-scaling-stroke" });
+    const dot = el("circle", { r: 5, fill: "#ffc53d", stroke: "#0a0f1f", "stroke-width": 2, visibility: "hidden" });
+    svg.append(cross, dot);
+    const hit = el("rect", { x: L, y: 0, width: W - L - R, height: H, fill: "transparent" });
+    svg.append(hit);
+    const tip = h("div", { class: "tip", hidden: true });
+    const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+    hit.addEventListener("pointermove", (e) => {
+      const r = svg.getBoundingClientRect();
+      const vx = ((e.clientX - r.left) / r.width) * W;
+      const i = Math.max(0, Math.min(pts.length - 1, Math.round(((vx - L) / (W - L - R)) * (pts.length - 1))));
+      const p = pts[i], px = x(i), py = y(p.y);
+      cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", px); dot.setAttribute("cy", py); dot.setAttribute("visibility", "visible");
+      tip.replaceChildren(
+        h("div", { class: "t1", text: p.bet ? `Bet ${i} · ${p.bet.league}` : "Start" }),
+        p.bet ? h("div", { text: p.bet.pick }) : null,
+        p.bet ? h("div", {}, `${p.bet.status === "won" ? "Won" : p.bet.status === "lost" ? "Lost" : "Push"} `, h("b", { class: cls(p.bet.profit), text: fmtP(p.bet.profit) })) : null,
+        h("div", {}, "Running ", h("b", { class: cls(p.y), text: fmtP(p.y) })),
+      );
+      tip.hidden = false;
+      const bx = box.getBoundingClientRect(), left = (px / W) * bx.width;
+      tip.style.left = Math.min(Math.max(0, left + 12), Math.max(0, bx.width - tip.offsetWidth)) + "px";
+      tip.style.top = Math.max(0, (py / H) * bx.height - 70) + "px";
+    });
+    hit.addEventListener("pointerleave", hide);
+    box.replaceChildren(svg, tip);
+  }
+
+  let resizeT = 0, lastW = 0;
+  window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { const w = $("#chart").clientWidth; if (w !== lastW) { lastW = w; renderChart(); } }, 150); });
+
+  const renderAll = () => { renderHeader(); renderFollowers(); renderSlips(); };
+
+  function copyBet(b) {
+    const done = (ok) => { copied = ok ? b.id : "fail:" + b.id; renderSlips(); if (ok) setTimeout(() => { if (copied === b.id) { copied = null; renderSlips(); } }, 1500); };
+    try { navigator.clipboard.writeText(slipText(b)).then(() => done(true), () => done(false)); } catch { done(false); }
+  }
+
+  // ---- bet catalog: bet types and props by sport ------------------------
+  const LEAGUE_GROUPS = [
+    ["Football", ["NFL", "NCAAF"]],
+    ["Basketball", ["NBA", "WNBA", "NCAAB"]],
+    ["Baseball", ["MLB"]],
+    ["Hockey", ["NHL"]],
+    ["Soccer", ["EPL", "MLS", "Champions League", "La Liga", "Serie A", "Bundesliga"]],
+    ["Fighting", ["UFC"]],
+    ["Tennis", ["ATP", "WTA"]],
+    ["Golf", ["PGA"]],
+    ["Racing", ["F1"]],
+  ];
+  const SPORT_OF = { NFL: "football", NCAAF: "football", NBA: "basketball", WNBA: "basketball", NCAAB: "basketball", MLB: "baseball", NHL: "hockey",
+    EPL: "soccer", MLS: "soccer", "Champions League": "soccer", "La Liga": "soccer", "Serie A": "soccer", Bundesliga: "soccer",
+    UFC: "mma", ATP: "tennis", WTA: "tennis", PGA: "golf", F1: "racing" };
+  const F = "futures";
+  const CATALOG = {
+    football: {
+      "Spread": 0, "Moneyline": 0, "Total": 0,
+      "Player prop": ["Passing yards", "Passing TDs", "Pass completions", "Pass attempts", "Interceptions thrown", "Longest completion",
+        "Rushing yards", "Rushing attempts", "Longest rush", "Receiving yards", "Receptions", "Longest reception",
+        "Rush + rec yards", "Pass + rush yards", "Anytime TD scorer", "First TD scorer", "Last TD scorer", "2+ TDs",
+        "Tackles + assists", "Sacks", "Defensive interceptions", "Field goals made", "Kicking points", "Extra points made"],
+      "Team prop": ["Team total points", "Team total TDs", "Team field goals made", "Team to score first", "Team to score in every quarter"],
+      "Game prop": ["First to score", "First scoring play (TD/FG)", "Overtime", "Winning margin", "Total TDs", "Highest scoring half", "Safety", "Two-point conversion made"],
+      "1st half": ["Spread", "Moneyline", "Total"], "1st quarter": ["Spread", "Moneyline", "Total"], "2nd half": ["Spread", "Moneyline", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Teaser": ["6-point", "6.5-point", "7-point", "10-point"], "Future": F, "Other": 0,
+    },
+    basketball: {
+      "Spread": 0, "Moneyline": 0, "Total": 0,
+      "Player prop": ["Points", "Rebounds", "Assists", "Threes made", "Pts + Reb + Ast", "Pts + Reb", "Pts + Ast", "Reb + Ast",
+        "Steals", "Blocks", "Steals + Blocks", "Turnovers", "Free throws made", "Double-double", "Triple-double", "First basket"],
+      "Team prop": ["Team total points", "Team threes made", "Team to score first", "Race to 20 points"],
+      "Game prop": ["First team to score", "Overtime", "Winning margin", "Highest scoring quarter", "Odd/even total points"],
+      "1st half": ["Spread", "Moneyline", "Total"], "1st quarter": ["Spread", "Moneyline", "Total"], "2nd half": ["Spread", "Moneyline", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    baseball: {
+      "Run line": 0, "Moneyline": 0, "Total": 0,
+      "Player prop": ["Hits", "Total bases", "Home runs", "RBIs", "Runs scored", "Hits + Runs + RBIs", "Singles", "Doubles",
+        "Stolen bases", "Batter walks", "Batter strikeouts", "Pitcher strikeouts", "Outs recorded", "Hits allowed",
+        "Earned runs allowed", "Walks allowed", "Pitcher to record a win"],
+      "Team prop": ["Team total runs", "Team to score first", "Team home runs", "Team hits"],
+      "Game prop": ["Extra innings", "Total hits (both teams)", "Winning margin", "Team to score last", "Grand slam hit"],
+      "1st inning": ["No run first inning (NRFI)", "Yes run first inning (YRFI)"],
+      "First 5 innings": ["Run line", "Moneyline", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    hockey: {
+      "Puck line": 0, "Moneyline": 0, "60-minute line (3-way)": 0, "Total": 0,
+      "Player prop": ["Shots on goal", "Anytime goal scorer", "First goal scorer", "Last goal scorer", "2+ goals", "Assists", "Points",
+        "Power play points", "Blocked shots", "Hits", "Goalie saves", "Goals against", "Goalie shutout"],
+      "Team prop": ["Team total goals", "Team to score first", "Team shots on goal"],
+      "Game prop": ["Overtime", "Shootout", "Both teams to score", "First to score", "Period with most goals", "Winning margin"],
+      "1st period": ["Puck line", "Moneyline (3-way)", "Total"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    soccer: {
+      "Moneyline (3-way)": 0, "Double chance": 0, "Draw no bet": 0, "Spread (handicap)": 0, "Total goals": 0, "Both teams to score": 0,
+      "Player prop": ["Anytime goalscorer", "First goalscorer", "Last goalscorer", "2+ goals", "Goal or assist", "Assists", "Shots",
+        "Shots on target", "Passes", "Tackles", "Goalkeeper saves", "To be carded"],
+      "Team prop": ["Team total goals", "Team corners", "Team to score first", "Clean sheet"],
+      "Game prop": ["Total corners", "Total cards", "Correct score", "Half with most goals", "Halftime/fulltime"],
+      "1st half": ["Moneyline (3-way)", "Spread (handicap)", "Total goals", "Both teams to score"],
+      "Parlay": 0, "Same game parlay": 0, "Future": F, "Other": 0,
+    },
+    mma: {
+      "Moneyline": 0,
+      "Method of victory": ["KO/TKO", "Submission", "Decision", "Unanimous decision", "Split decision"],
+      "Round betting": ["Round 1", "Round 2", "Round 3", "Round 4", "Round 5"],
+      "Total rounds": 0, "Goes the distance": 0,
+      "Fighter prop": ["Significant strikes", "Takedowns", "Knockdowns", "Submission attempts", "Win by KO/TKO", "Win by submission",
+        "Win by decision", "Win inside the distance"],
+      "Fight prop": ["Fight ends in round 1", "Fight of the Night", "Performance of the Night", "Both fighters knocked down"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    tennis: {
+      "Moneyline": 0, "Game spread": 0, "Set spread": 0, "Total games": 0,
+      "Set betting": ["2-0", "2-1", "0-2", "1-2", "3-0", "3-1", "3-2", "0-3", "1-3", "2-3"],
+      "Player prop": ["Aces", "Double faults", "Games won", "Breaks of serve", "To win a set", "Win in straight sets"],
+      "Match prop": ["Tiebreak in match", "Total sets", "First set winner", "Total aces in match"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    golf: {
+      "Outright winner": 0, "Top 5": 0, "Top 10": 0, "Top 20": 0, "Top 40": 0,
+      "Make/miss cut": ["Make the cut", "Miss the cut"],
+      "Matchup": ["Tournament matchup", "Round matchup", "3-ball"],
+      "Round leader": ["First round leader", "Second round leader", "Third round leader"],
+      "Player prop": ["Round score", "Birdies or better", "Bogeys or worse", "Hole in one", "Top nationality", "Winning score"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    racing: {
+      "Race winner": 0, "Podium finish": 0, "Top 6 finish": 0, "Top 10 finish": 0, "Head-to-head": 0, "Fastest lap": 0, "Pole position": 0,
+      "Race prop": ["Safety car", "Classified finishers", "Winning margin", "Winning constructor"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+    other: {
+      "Spread": 0, "Moneyline": 0, "Total": 0, "Player prop": ["Points", "Goals", "Assists", "Other stat"],
+      "Parlay": 0, "Future": F, "Other": 0,
+    },
+  };
+  const SOCCER_FUT = ["League winner", "Top 4 finish", "Relegation", "Top goalscorer (Golden Boot)", "To win the domestic cup"];
+  const FUTURES = {
+    NFL: ["Super Bowl winner", "Conference winner", "Division winner", "Regular season win total", "To make the playoffs", "MVP",
+      "Offensive Player of the Year", "Defensive Player of the Year", "Offensive Rookie of the Year", "Defensive Rookie of the Year",
+      "Comeback Player of the Year", "Coach of the Year", "Passing yards leader", "Rushing yards leader", "Receiving yards leader", "Most passing TDs"],
+    NCAAF: ["National championship", "Conference champion", "Heisman Trophy", "Regular season win total", "To make the College Football Playoff"],
+    NBA: ["NBA champion", "Conference winner", "Division winner", "Regular season win total", "To make the playoffs", "MVP", "Rookie of the Year",
+      "Defensive Player of the Year", "Sixth Man of the Year", "Most Improved Player", "Clutch Player of the Year", "Coach of the Year"],
+    WNBA: ["WNBA champion", "Regular season win total", "MVP", "Rookie of the Year", "Defensive Player of the Year"],
+    NCAAB: ["National championship", "To reach the Final Four", "Region winner", "Conference tournament winner", "Regular season conference winner"],
+    MLB: ["World Series winner", "League pennant", "Division winner", "Regular season win total", "To make the playoffs", "AL MVP", "NL MVP",
+      "AL Cy Young", "NL Cy Young", "AL Rookie of the Year", "NL Rookie of the Year", "Home run leader"],
+    NHL: ["Stanley Cup winner", "Conference winner", "Division winner", "Regular season points total", "To make the playoffs", "Hart Trophy (MVP)",
+      "Vezina Trophy", "Norris Trophy", "Calder Trophy", "Rocket Richard (most goals)", "Art Ross (most points)", "Conn Smythe"],
+    EPL: SOCCER_FUT, "La Liga": SOCCER_FUT, "Serie A": SOCCER_FUT, Bundesliga: SOCCER_FUT,
+    MLS: ["MLS Cup winner", "Supporters' Shield", "Conference winner", "Golden Boot"],
+    "Champions League": ["Champions League winner", "To reach the final", "Top goalscorer"],
+    UFC: ["To win a title by year end", "Title fight winner"],
+    ATP: ["Tournament winner", "To reach the final", "Grand Slam winner", "Year-end No. 1"],
+    WTA: ["Tournament winner", "To reach the final", "Grand Slam winner", "Year-end No. 1"],
+    PGA: ["Tournament winner", "Major winner", "FedEx Cup champion", "Ryder Cup winner", "Player of the Year"],
+    F1: ["Drivers' Championship", "Constructors' Championship", "Most race wins"],
+  };
+  const OTHER_FUT = ["Championship winner", "Season win total", "Award winner"];
+  // Markets that name a person or team and take Over/Under or Yes/No.
+  const PERSON_MARKETS = { "Player prop": "Player", "Fighter prop": "Fighter", "Team prop": "Team" };
+  const DETAIL_LABEL = { "Player prop": "Stat", "Fighter prop": "Stat", "Team prop": "Stat", "Future": "Future", "Method of victory": "Method",
+    "Round betting": "Round", "Set betting": "Set score", "Teaser": "Teaser points" };
+  const YES_NO = /anytime|first|last|2\+|double-double|triple-double|carded|shutout|^win |inside the distance|to win a set|straight sets|hole in one|to score|to record/i;
+  const PICK_EXAMPLE = { "Spread": "Chiefs -3.5", "Run line": "Dodgers -1.5", "Puck line": "Rangers +1.5", "Moneyline": "Chiefs ML", "Total": "Over 47.5",
+    "Total goals": "Over 2.5", "Total games": "Over 22.5", "Total rounds": "Under 2.5", "Moneyline (3-way)": "Arsenal to win", "Future": "Chiefs to win the Super Bowl",
+    "Parlay": "Chiefs ML + Lakers -4.5", "Same game parlay": "Chiefs ML + Kelce 60+ rec yds" };
+
+  const sportOf = (league) => SPORT_OF[league] || "other";
+  const marketsFor = (league) => CATALOG[sportOf(league)];
+  const detailsFor = (league, market) => {
+    const d = marketsFor(league)[market];
+    return d === F ? (FUTURES[league] || OTHER_FUT) : Array.isArray(d) ? d : null;
+  };
+
+  const leagueSel = $("#f-league-sel");
+  leagueSel.replaceChildren(
+    ...LEAGUE_GROUPS.map(([g, ls]) => h("optgroup", { label: g }, ls.map((l) => h("option", { value: l, text: l })))),
+    h("option", { value: "__other", text: "Other league…" }),
+  );
+  const getLeague = () => {
+    if (leagueSel.value !== "__other") return leagueSel.value;
+    const v = $("#f-league").value.trim();
+    return v.length <= 5 ? v.toUpperCase() : v;
+  };
+  function setLeague(v) {
+    v = String(v || "").trim();
+    const known = Object.keys(SPORT_OF).find((l) => l.toLowerCase() === v.toLowerCase());
+    if (known) { leagueSel.value = known; $("#f-league").value = ""; }
+    else if (v) { leagueSel.value = "__other"; $("#f-league").value = v; }
+    $("#f-league-wrap").hidden = leagueSel.value !== "__other";
+    refreshMarkets();
+  }
+
+  let pickTouched = false;
+  function selectFill(sel, values, keep) {
+    const want = keep ?? sel.value;
+    const list = [...values];
+    if (want && !list.includes(want) && keep != null) list.push(want); // keep a saved value that isn't in the list
+    sel.replaceChildren(...list.map((v) => h("option", { value: v, text: v })));
+    const match = list.find((v) => v.toLowerCase() === String(want || "").toLowerCase());
+    sel.value = match || list[0] || "";
+  }
+  function refreshMarkets(keep) {
+    const lg = leagueSel.value === "__other" ? "__other" : leagueSel.value;
+    selectFill($("#f-market"), Object.keys(marketsFor(lg)), keep);
+    refreshDetail();
+  }
+  function refreshDetail(keep) {
+    const m = $("#f-market").value;
+    const list = detailsFor(leagueSel.value, m);
+    $("#f-detail-wrap").hidden = !list;
+    if (list) { $("#f-detail-label").textContent = DETAIL_LABEL[m] || "Type"; selectFill($("#f-detail"), list, keep); }
+    const who = PERSON_MARKETS[m];
+    $("#f-prop").hidden = !who;
+    if (who) {
+      mainWho.context(mainLeagueKey(), m, $("#f-detail").value);
+      if (keep == null) $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over";
+    }
+    const par = isParlay(m);
+    $("#f-legs").hidden = !par;
+    $("#f-pick-wrap").hidden = par;
+    if (par) { if (!legs.length) setLegs([]); else legs.forEach((l) => l.refresh()); legsChanged(); }
+    refreshProp();
+  }
+  function refreshProp() {
+    const side = $("#f-side").value;
+    $("#f-line-wrap").hidden = side === "Yes" || side === "No";
+    const m = $("#f-market").value;
+    $("#f-pick").placeholder = PICK_EXAMPLE[m] || (PERSON_MARKETS[m] ? "Filled in from the fields above" : "Describe the bet");
+    $("#f-pick-hint").textContent = PERSON_MARKETS[m] && !pickTouched ? "built from the fields above, edit if you like" : "";
+    composePick();
+  }
+  function composePick() {
+    const m = $("#f-market").value;
+    if (pickTouched || !PERSON_MARKETS[m]) return;
+    $("#f-pick").value = buildPick(mainWho.value(), $("#f-side").value, $("#f-line").value.trim(), $("#f-detail").value);
+  }
+  leagueSel.addEventListener("change", () => { $("#f-league-wrap").hidden = leagueSel.value !== "__other"; refreshMarkets(); if (!$("#f-league-wrap").hidden) $("#f-league").focus(); });
+  $("#f-market").addEventListener("change", () => refreshDetail());
+  $("#f-detail").addEventListener("change", () => { if (PERSON_MARKETS[$("#f-market").value]) { $("#f-side").value = YES_NO.test($("#f-detail").value) ? "Yes" : "Over"; mainWho.context(mainLeagueKey(), $("#f-market").value, $("#f-detail").value); } refreshProp(); });
+  $("#f-side").addEventListener("change", refreshProp);
+  $("#f-line").addEventListener("input", composePick);
+  $("#f-pick").addEventListener("input", () => { pickTouched = $("#f-pick").value.trim() !== ""; $("#f-pick-hint").textContent = ""; });
+
+  function readBetType() {
+    const m = $("#f-market").value;
+    const out = { market: m, detail: $("#f-detail-wrap").hidden ? "" : $("#f-detail").value, player: "", side: "", line: "" };
+    if (PERSON_MARKETS[m]) {
+      out.player = mainWho.value();
+      out.side = $("#f-side").value;
+      out.line = $("#f-line-wrap").hidden ? "" : $("#f-line").value.trim();
+    }
+    return out;
+  }
+  function writeBetType(x, pickFromData) {
+    setLeague(x.league || "NFL");
+    refreshMarkets(x.market || undefined);
+    refreshDetail(x.detail || undefined);
+    if (PERSON_MARKETS[$("#f-market").value]) mainWho.set(x.player || "");
+    if (isParlay($("#f-market").value)) setLegs(Array.isArray(x.legs) ? x.legs : []);
+    if (["Over", "Under", "Yes", "No"].includes(x.side)) $("#f-side").value = x.side;
+    $("#f-line").value = x.line != null && x.line !== "" ? String(x.line) : "";
+    pickTouched = !!pickFromData;
+    refreshProp();
+    if (pickFromData) $("#f-pick").value = String(pickFromData).slice(0, 120);
+  }
+  const catalogForPrompt = () => Object.entries(CATALOG).map(([sport, mk]) => {
+    const leagues = Object.entries(SPORT_OF).filter(([, s]) => s === sport).map(([l]) => l).join(", ") || "any other league";
+    return `${sport} (${leagues}): ` + Object.entries(mk).map(([m, d]) => Array.isArray(d) ? `${m} [${d.join(" | ")}]` : d === F ? `${m} [futures market, e.g. ${(FUTURES[leagues.split(", ")[0]] || OTHER_FUT).slice(0, 3).join(" | ")}]` : m).join("; ");
+  }).join("\n");
+
+  // ---- NFL teams and key players (team → player picker) -------------------
+  // Skill-position starters and regulars by team. Rosters change; "Type a name…" covers anyone missing.
+  const NFL_TEAMS = [
+    ["Cardinals", "Arizona Cardinals", "QB Kyler Murray|RB James Conner|RB Trey Benson|WR Marvin Harrison Jr.|WR Michael Wilson|TE Trey McBride"],
+    ["Falcons", "Atlanta Falcons", "QB Michael Penix Jr.|QB Kirk Cousins|RB Bijan Robinson|RB Tyler Allgeier|WR Drake London|WR Darnell Mooney|TE Kyle Pitts"],
+    ["Ravens", "Baltimore Ravens", "QB Lamar Jackson|RB Derrick Henry|RB Justice Hill|WR Zay Flowers|WR Rashod Bateman|WR DeAndre Hopkins|TE Mark Andrews|TE Isaiah Likely"],
+    ["Bills", "Buffalo Bills", "QB Josh Allen|RB James Cook|RB Ray Davis|WR Khalil Shakir|WR Keon Coleman|WR Joshua Palmer|TE Dalton Kincaid|TE Dawson Knox"],
+    ["Panthers", "Carolina Panthers", "QB Bryce Young|RB Chuba Hubbard|RB Rico Dowdle|WR Tetairoa McMillan|WR Xavier Legette|WR Jalen Coker|TE Tommy Tremble"],
+    ["Bears", "Chicago Bears", "QB Caleb Williams|RB D'Andre Swift|WR DJ Moore|WR Rome Odunze|WR Luther Burden III|TE Colston Loveland|TE Cole Kmet"],
+    ["Bengals", "Cincinnati Bengals", "QB Joe Burrow|QB Joe Flacco|RB Chase Brown|WR Ja'Marr Chase|WR Tee Higgins|WR Andrei Iosivas|TE Mike Gesicki|TE Noah Fant"],
+    ["Browns", "Cleveland Browns", "QB Shedeur Sanders|QB Dillon Gabriel|QB Deshaun Watson|RB Quinshon Judkins|WR Jerry Jeudy|WR Cedric Tillman|TE David Njoku|TE Harold Fannin Jr."],
+    ["Cowboys", "Dallas Cowboys", "QB Dak Prescott|RB Javonte Williams|RB Jaydon Blue|WR CeeDee Lamb|WR George Pickens|WR KaVontae Turpin|TE Jake Ferguson"],
+    ["Broncos", "Denver Broncos", "QB Bo Nix|RB RJ Harvey|RB J.K. Dobbins|WR Courtland Sutton|WR Troy Franklin|WR Marvin Mims Jr.|TE Evan Engram"],
+    ["Lions", "Detroit Lions", "QB Jared Goff|RB Jahmyr Gibbs|RB David Montgomery|WR Amon-Ra St. Brown|WR Jameson Williams|WR Isaac TeSlaa|TE Sam LaPorta"],
+    ["Packers", "Green Bay Packers", "QB Jordan Love|RB Josh Jacobs|WR Jayden Reed|WR Romeo Doubs|WR Christian Watson|WR Matthew Golden|TE Tucker Kraft"],
+    ["Texans", "Houston Texans", "QB C.J. Stroud|RB Joe Mixon|RB Woody Marks|RB Nick Chubb|WR Nico Collins|WR Christian Kirk|WR Jayden Higgins|TE Dalton Schultz"],
+    ["Colts", "Indianapolis Colts", "QB Daniel Jones|QB Anthony Richardson|RB Jonathan Taylor|WR Michael Pittman Jr.|WR Josh Downs|WR Alec Pierce|TE Tyler Warren"],
+    ["Jaguars", "Jacksonville Jaguars", "QB Trevor Lawrence|RB Travis Etienne Jr.|RB Bhayshul Tuten|WR Brian Thomas Jr.|WR Travis Hunter|WR Jakobi Meyers|TE Brenton Strange"],
+    ["Chiefs", "Kansas City Chiefs", "QB Patrick Mahomes|RB Isiah Pacheco|RB Kareem Hunt|WR Rashee Rice|WR Xavier Worthy|WR Hollywood Brown|TE Travis Kelce"],
+    ["Raiders", "Las Vegas Raiders", "QB Geno Smith|RB Ashton Jeanty|RB Raheem Mostert|WR Tre Tucker|WR Jack Bech|TE Brock Bowers"],
+    ["Chargers", "Los Angeles Chargers", "QB Justin Herbert|RB Omarion Hampton|RB Najee Harris|WR Ladd McConkey|WR Quentin Johnston|WR Keenan Allen|TE Oronde Gadsden II"],
+    ["Rams", "Los Angeles Rams", "QB Matthew Stafford|RB Kyren Williams|RB Blake Corum|WR Puka Nacua|WR Davante Adams|WR Tutu Atwell|TE Colby Parkinson"],
+    ["Dolphins", "Miami Dolphins", "QB Tua Tagovailoa|RB De'Von Achane|WR Jaylen Waddle|WR Malik Washington|TE Darren Waller"],
+    ["Vikings", "Minnesota Vikings", "QB J.J. McCarthy|QB Carson Wentz|RB Aaron Jones|RB Jordan Mason|WR Justin Jefferson|WR Jordan Addison|WR Adam Thielen|TE T.J. Hockenson"],
+    ["Patriots", "New England Patriots", "QB Drake Maye|RB TreVeyon Henderson|RB Rhamondre Stevenson|WR Stefon Diggs|WR Kayshon Boutte|WR DeMario Douglas|TE Hunter Henry"],
+    ["Saints", "New Orleans Saints", "QB Tyler Shough|QB Spencer Rattler|RB Alvin Kamara|RB Kendre Miller|WR Chris Olave|TE Juwan Johnson"],
+    ["Giants", "New York Giants", "QB Jaxson Dart|QB Russell Wilson|RB Cam Skattebo|RB Tyrone Tracy Jr.|WR Malik Nabers|WR Wan'Dale Robinson|TE Theo Johnson"],
+    ["Jets", "New York Jets", "QB Justin Fields|QB Tyrod Taylor|RB Breece Hall|RB Braelon Allen|WR Garrett Wilson|TE Mason Taylor"],
+    ["Eagles", "Philadelphia Eagles", "QB Jalen Hurts|RB Saquon Barkley|WR A.J. Brown|WR DeVonta Smith|TE Dallas Goedert"],
+    ["Steelers", "Pittsburgh Steelers", "QB Aaron Rodgers|RB Jaylen Warren|RB Kenneth Gainwell|WR DK Metcalf|WR Calvin Austin III|TE Pat Freiermuth|TE Jonnu Smith"],
+    ["49ers", "San Francisco 49ers", "QB Brock Purdy|QB Mac Jones|RB Christian McCaffrey|WR Brandon Aiyuk|WR Jauan Jennings|WR Ricky Pearsall|TE George Kittle"],
+    ["Seahawks", "Seattle Seahawks", "QB Sam Darnold|RB Kenneth Walker III|RB Zach Charbonnet|WR Jaxon Smith-Njigba|WR Cooper Kupp|WR Rashid Shaheed|TE AJ Barner"],
+    ["Buccaneers", "Tampa Bay Buccaneers", "QB Baker Mayfield|RB Bucky Irving|RB Rachaad White|WR Mike Evans|WR Chris Godwin|WR Emeka Egbuka|TE Cade Otton"],
+    ["Titans", "Tennessee Titans", "QB Cam Ward|RB Tony Pollard|RB Tyjae Spears|WR Calvin Ridley|WR Elic Ayomanor|TE Chig Okonkwo"],
+    ["Commanders", "Washington Commanders", "QB Jayden Daniels|QB Marcus Mariota|RB Jacory Croskey-Merritt|RB Austin Ekeler|WR Terry McLaurin|WR Deebo Samuel|TE Zach Ertz"],
+  ];
+  const NFL_ROSTER = Object.fromEntries(NFL_TEAMS.map(([k, , r]) => [k, r.split("|").map((x) => ({ pos: x.slice(0, 2).trim(), name: x.slice(3) }))]));
+  const posFor = (stat) => {
+    const s = String(stat || "").toLowerCase();
+    if (/rush \+ rec/.test(s)) return ["RB", "WR", "TE"];
+    if (/pass|interceptions thrown|completion/.test(s)) return ["QB"];
+    if (/rush/.test(s)) return ["RB", "QB"];
+    if (/receiv|reception/.test(s)) return ["WR", "TE", "RB"];
+    if (/td/.test(s)) return ["RB", "WR", "TE", "QB"];
+    return [];
+  };
+
+  // Team → player picker. NFL gets dropdowns; other leagues get a text box.
+  function personPicker(onChange) {
+    const teamSel = h("select", { "aria-label": "Team" }, h("option", { value: "", text: "Pick a team" }), NFL_TEAMS.map(([k, full]) => h("option", { value: k, text: full })));
+    const playerSel = h("select", { "aria-label": "Player" });
+    const text = h("input", { maxlength: 40 });
+    const textSpan = h("span", { text: "Player" });
+    const teamLab = h("label", {}, "Team", teamSel);
+    const playerLab = h("label", {}, "Player", playerSel);
+    const textLab = h("label", {}, textSpan, text);
+    const el = h("div", { class: "pp" }, teamLab, playerLab, textLab);
+    let kind = "Player", nfl = false, stat = "";
+    const useTeams = () => nfl && (kind === "Player" || kind === "Team");
+    function fillPlayers(keep) {
+      const roster = [...(NFL_ROSTER[teamSel.value] || [])];
+      const pref = posFor(stat);
+      const rank = (p) => (pref.includes(p.pos) ? pref.indexOf(p.pos) : 9);
+      roster.sort((a, b) => rank(a) - rank(b));
+      playerSel.replaceChildren(h("option", { value: "", text: "Pick a player" }), ...roster.map((p) => h("option", { value: p.name, text: `${p.name} (${p.pos})` })), h("option", { value: "__type", text: "Type a name…" }));
+      playerSel.value = keep && [...playerSel.options].some((o) => o.value === keep) ? keep : keep === "__type" ? "__type" : "";
+    }
+    function layout() {
+      const t = useTeams();
+      teamLab.hidden = !t;
+      playerLab.hidden = !(t && kind === "Player" && teamSel.value);
+      textLab.hidden = !(!t || (kind === "Player" && (!teamSel.value || playerSel.value === "__type")));
+      textSpan.textContent = t && kind === "Player" && teamSel.value ? "Player name" : kind;
+      text.placeholder = kind === "Team" ? "Team name" : kind + " name";
+    }
+    function value() {
+      if (useTeams() && kind === "Team") return teamSel.value;
+      if (useTeams() && kind === "Player" && teamSel.value && playerSel.value && playerSel.value !== "__type") return playerSel.value;
+      return text.value.trim();
+    }
+    function set(v) {
+      v = String(v || "").trim();
+      text.value = ""; teamSel.value = ""; 
+      if (useTeams() && v) {
+        const lc = v.toLowerCase();
+        if (kind === "Team") {
+          const t = NFL_TEAMS.find(([k, full]) => k.toLowerCase() === lc || full.toLowerCase() === lc);
+          if (t) teamSel.value = t[0]; else text.value = v;
+        } else {
+          const t = NFL_TEAMS.find(([k]) => NFL_ROSTER[k].some((p) => p.name.toLowerCase() === lc));
+          if (t) { teamSel.value = t[0]; fillPlayers(NFL_ROSTER[t[0]].find((p) => p.name.toLowerCase() === lc).name); }
+          else text.value = v;
+        }
+      } else text.value = v;
+      if (!teamSel.value) fillPlayers("");
+      layout();
+    }
+    function context(league, market, st) {
+      const cur = value();
+      nfl = league === "NFL"; kind = PERSON_MARKETS[market] || "Player"; stat = st || "";
+      const keepTeam = teamSel.value, keepPlayer = playerSel.value;
+      if (useTeams() && keepTeam) { fillPlayers(keepPlayer); layout(); }
+      else set(cur);
+    }
+    teamSel.addEventListener("change", () => { fillPlayers(""); layout(); onChange(); if (kind === "Player" && teamSel.value) playerSel.focus(); });
+    playerSel.addEventListener("change", () => { layout(); onChange(); if (playerSel.value === "__type") text.focus(); });
+    text.addEventListener("input", onChange);
+    return { el, value, set, context, clear: () => set("") };
+  }
+  const buildPick = (who, side, line, stat) =>
+    !who ? "" : side === "Yes" ? `${who} ${stat}` : side === "No" ? `${who} No ${stat}` : `${who} ${side}${line ? " " + line : ""} ${stat}`;
+
+  // ---- parlay legs ----------------------------------------------------------
+  const PARLAY_MARKETS = ["Parlay", "Same game parlay", "Teaser"];
+  const isParlay = (m) => PARLAY_MARKETS.includes(m);
+  const legsShareLeague = () => $("#f-market").value !== "Parlay"; // same game parlays and teasers stay in one league
+  const mainLeagueKey = () => (leagueSel.value === "__other" ? "__other" : leagueSel.value);
+  const legMarkets = (league) => Object.keys(marketsFor(league)).filter((m) => !isParlay(m));
+  const toDec = (o) => (o > 0 ? 1 + o / 100 : 1 + 100 / -o);
+  const toAmerican = (d) => (d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1)));
+  let legs = [], oddsTouched = false;
+
+  function makeLeg(data = {}) {
+    const lg = h("select", { "aria-label": "Leg league" }, ...LEAGUE_GROUPS.map(([g, ls]) => h("optgroup", { label: g }, ls.map((l) => h("option", { value: l, text: l })))), h("option", { value: "__other", text: "Other" }));
+    const mk = h("select"), dt = h("select"), dtSpan = h("span", { text: "Type" });
+    const side = h("select", {}, ["Over", "Under", "Yes", "No"].map((v) => h("option", { value: v, text: v })));
+    const line = h("input", { inputmode: "decimal", maxlength: 8, placeholder: "e.g. 74.5" });
+    const pick = h("input", { maxlength: 120 });
+    const odds = h("input", { inputmode: "numeric", placeholder: "-110" });
+    let touched = false;
+    const who = personPicker(() => compose());
+    const lgLab = h("label", {}, "League", lg);
+    const mkLab = h("label", {}, "Bet type", mk);
+    const dtLab = h("label", {}, dtSpan, dt);
+    const sideLab = h("label", {}, "Over / Under", side);
+    const lineLab = h("label", {}, "Line", line);
+    const propBox = h("div", { class: "wide leg-prop" }, who.el, sideLab, lineLab);
+    const pickLab = h("label", { class: "wide" }, "Pick", pick);
+    const oddsLab = h("label", {}, "Leg odds (optional)", odds);
+    const title = h("b", { text: "Leg" });
+    const rm = h("button", { class: "link", type: "button", text: "Remove" });
+    const el = h("div", { class: "leg" }, h("div", { class: "leg-head" }, title, rm), h("div", { class: "leg-grid" }, lgLab, mkLab, dtLab, propBox, pickLab, oddsLab));
+    const L = () => (legsShareLeague() ? mainLeagueKey() : lg.value);
+
+    function refresh(keepMk, keepDt) {
+      lgLab.hidden = legsShareLeague();
+      selectFill(mk, legMarkets(L()), keepMk);
+      refreshD(keepDt);
+    }
+    function refreshD(keepDt) {
+      const list = detailsFor(L(), mk.value);
+      dtLab.hidden = !list;
+      if (list) { dtSpan.textContent = DETAIL_LABEL[mk.value] || "Type"; selectFill(dt, list, keepDt); }
+      const k = PERSON_MARKETS[mk.value];
+      propBox.hidden = !k;
+      if (k) { who.context(L(), mk.value, dt.value); if (keepDt == null) side.value = YES_NO.test(dt.value) ? "Yes" : "Over"; }
+      refreshP();
+    }
+    function refreshP() {
+      lineLab.hidden = side.value === "Yes" || side.value === "No";
+      pick.placeholder = PICK_EXAMPLE[mk.value] || (PERSON_MARKETS[mk.value] ? "Filled in from the fields above" : "Describe this leg");
+      compose();
+    }
+    function compose() {
+      if (!touched && PERSON_MARKETS[mk.value]) pick.value = buildPick(who.value(), side.value, line.value.trim(), dt.value);
+      legsChanged();
+    }
+    lg.addEventListener("change", () => refresh());
+    mk.addEventListener("change", () => refreshD());
+    dt.addEventListener("change", () => { if (PERSON_MARKETS[mk.value]) side.value = YES_NO.test(dt.value) ? "Yes" : "Over"; refreshP(); });
+    side.addEventListener("change", refreshP);
+    line.addEventListener("input", compose);
+    pick.addEventListener("input", () => { touched = pick.value.trim() !== ""; legsChanged(); });
+    odds.addEventListener("input", legsChanged);
+    rm.addEventListener("click", () => { legs = legs.filter((x) => x !== api); el.remove(); renumber(); legsChanged(); });
+
+    const api = {
+      el, refresh: () => refresh(mk.value, dt.value),
+      setTitle: (t) => { title.textContent = t; rm.hidden = legs.length <= 2; },
+      read: () => {
+        const m = mk.value, k = PERSON_MARKETS[m];
+        return {
+          league: legsShareLeague() ? getLeague() : (lg.value === "__other" ? "Other" : lg.value),
+          market: m, detail: dtLab.hidden ? "" : dt.value,
+          player: k ? who.value() : "", side: k ? side.value : "", line: k && !lineLab.hidden ? line.value.trim() : "",
+          pick: pick.value.trim(), odds: parseOdds(odds.value),
+        };
+      },
+    };
+    // initial values
+    const dl = String(data.league || "");
+    lg.value = Object.keys(SPORT_OF).find((l) => l.toLowerCase() === dl.toLowerCase()) || (dl ? "__other" : (mainLeagueKey() === "__other" ? "__other" : mainLeagueKey()));
+    refresh(data.market || undefined, data.detail || undefined);
+    if (PERSON_MARKETS[mk.value]) {
+      who.context(L(), mk.value, dt.value);
+      who.set(data.player || "");
+      if (["Over", "Under", "Yes", "No"].includes(data.side)) side.value = data.side;
+      line.value = data.line != null ? String(data.line) : "";
+    }
+    if (data.odds != null && parseOdds(data.odds)) odds.value = String(parseOdds(data.odds));
+    touched = !!data.pick;
+    refreshP();
+    if (data.pick) pick.value = String(data.pick).slice(0, 120);
+    return api;
+  }
+  function renumber() { legs.forEach((l, i) => l.setTitle(`Leg ${i + 1}`)); }
+  function addLeg(data) { const l = makeLeg(data); legs.push(l); $("#f-leg-list").append(l.el); renumber(); legsChanged(); return l; }
+  function setLegs(list) { legs = []; $("#f-leg-list").replaceChildren(); for (const d of list) addLeg(d); while (legs.length < 2) addLeg({}); }
+  function legsChanged() {
+    const read = legs.map((l) => l.read());
+    const withOdds = read.filter((l) => l.odds);
+    const hint = $("#f-legs-hint");
+    if (read.length && withOdds.length === read.length) {
+      const combo = toAmerican(read.reduce((d, l) => d * toDec(l.odds), 1));
+      hint.textContent = `${read.length} legs combine to ${fmtOdds(combo)}`;
+      if (!oddsTouched && $("#f-market").value !== "Teaser") { $("#f-odds").value = String(combo); updateHints(); }
+    } else hint.textContent = read.length ? `${read.length} legs · add leg odds to total them up, or enter the parlay odds below` : "";
+  }
+  const mainWho = personPicker(() => composePick());
+  $("#f-who").append(mainWho.el);
+  $("#f-add-leg").addEventListener("click", () => { const l = addLeg({}); l.el.querySelector("select:not([hidden]), input")?.focus(); });
+
+  // ---- owner actions ----------------------------------------------------
+  function setFormStatus(s) {
+    formStatus = s;
+    for (const b of document.querySelectorAll("#f-status button")) b.setAttribute("aria-pressed", String(b.dataset.s === s));
+  }
+  for (const b of document.querySelectorAll("#f-status button")) b.addEventListener("click", () => setFormStatus(b.dataset.s));
+
+  function resetForm() {
+    editing = null;
+    for (const id of ["#f-pick", "#f-event", "#f-note", "#f-time", "#f-line"]) $(id).value = "";
+    mainWho.clear();
+    pickTouched = false; oddsTouched = false;
+    legs = []; $("#f-leg-list").replaceChildren();
+    refreshDetail();
+    setFormStatus("pending");
+    $("#post-title").textContent = "Post a bet";
+    $("#import").style.display = "";
+    $("#f-submit").textContent = "Post bet";
+    $("#f-cancel").hidden = true;
+    $("#f-err").textContent = "";
+    updateHints();
+  }
+  function clearImport() { found = []; showFound(); impStatus(""); $("#imp-thumb").hidden = true; $("#imp-text").value = ""; }
+  function togglePost() {
+    const p = $("#post-panel");
+    if (!p.hidden) { resetForm(); clearImport(); impCtl?.abort(); }
+    p.hidden = !p.hidden;
+    $("#profile-panel").hidden = true;
+    renderHeader();
+    if (!p.hidden) $("#f-pick").focus();
+  }
+  function startEdit(b) {
+    editing = b.id;
+    writeBetType(b, b.legs?.length ? "" : b.pick);
+    oddsTouched = true;
+    $("#f-event").value = b.event || "";
+    $("#f-odds").value = String(b.odds); $("#f-amount").value = String(b.amount);
+    $("#f-time").value = toLocalInput(b.startsAt); $("#f-note").value = b.note || "";
+    setFormStatus(b.status);
+    $("#post-title").textContent = "Edit bet";
+    $("#import").dataset.editing = "1"; $("#import").style.display = "none";
+    $("#f-submit").textContent = "Save changes";
+    $("#f-cancel").hidden = false;
+    $("#post-panel").hidden = false;
+    $("#profile-panel").hidden = true;
+    updateHints();
+    renderHeader();
+    $("#post-panel").scrollIntoView({ block: "start" });
+    $("#f-pick").focus({ preventScroll: true });
+  }
+  $("#f-cancel").addEventListener("click", () => { resetForm(); $("#post-panel").hidden = true; renderHeader(); });
+
+  function openProfile() {
+    $("#pf-bio").value = meta.bio || "";
+    $("#profile-panel").hidden = false;
+    $("#post-panel").hidden = true;
+    renderHeader();
+    $("#pf-bio").focus();
+  }
+  $("#pf-cancel").addEventListener("click", () => { $("#profile-panel").hidden = true; });
+  $("#profile-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try { await db.doc("meta/profile").set({ bio: $("#pf-bio").value.trim() }); $("#profile-panel").hidden = true; }
+    catch { showNotice("Couldn't save the bio. Try again in a moment."); }
+  });
+
+  function updateHints() {
+    const o = parseOdds($("#f-odds").value), a = parseMoney($("#f-amount").value);
+    $("#f-odds-hint").textContent = o ? `${fmtOdds(o)} → ${(implied(o) * 100).toFixed(1)}% implied` : "American odds, e.g. -110 or +150";
+    $("#f-amt-hint").textContent = o && a ? `to win ${fmt$(toWin(o, a))}` : "";
+  }
+  $("#f-odds").addEventListener("input", () => { oddsTouched = true; updateHints(); });
+  $("#f-amount").addEventListener("input", updateHints);
+
+  $("#post-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("#f-err");
+    const league = getLeague();
+    const par = isParlay($("#f-market").value);
+    const legData = par ? legs.map((l) => l.read()) : [];
+    const pick = par ? legData.map((l) => l.pick).join(" + ") : $("#f-pick").value.trim();
+    const odds = parseOdds($("#f-odds").value);
+    const amount = parseMoney($("#f-amount").value);
+    if (!league) { err.textContent = "Add the league, like NFL or NBA."; return; }
+    if (par && legData.length < 2) { err.textContent = "A parlay needs at least 2 legs."; return; }
+    if (par && legData.some((l) => !l.pick)) { err.textContent = `Fill in the pick for leg ${legData.findIndex((l) => !l.pick) + 1}.`; return; }
+    if (!pick) { err.textContent = PERSON_MARKETS[$("#f-market").value] ? "Add the name above, or type your pick." : "Add your pick, like “Chiefs -3.5”."; return; }
+    if (!odds) { err.textContent = "Odds need to be American odds of at least 100, like -110 or +150."; return; }
+    if (!amount) { err.textContent = "Enter the amount you bet in dollars, like 50."; return; }
+    err.textContent = "";
+    const btn = $("#f-submit"); btn.disabled = true;
+    const t = $("#f-time").value;
+    const body = {
+      league, ...readBetType(), pick: pick.slice(0, 600), legs: legData, event: $("#f-event").value.trim(), odds, amount,
+      startsAt: t ? new Date(t).toISOString() : "", note: $("#f-note").value.trim(), status: formStatus,
+      settledAt: formStatus === "pending" ? "" : new Date().toISOString(),
+    };
+    try {
+      if (editing) {
+        const prev = bets.find((b) => b.id === editing);
+        await db.doc("bets/" + editing).set({ ...body, postedAt: prev?.postedAt || new Date().toISOString(), settledAt: formStatus === prev?.status ? (prev.settledAt || body.settledAt) : body.settledAt });
+        resetForm();
+        $("#post-panel").hidden = true;
+        renderHeader();
+      } else {
+        await db.collection("bets").add({ ...body, postedAt: new Date().toISOString() });
+        resetForm();
+        if (found.length) {
+          found.splice(found.sel || 0, 1); found.sel = 0;
+          if (found.length) { fillForm(found[0]); impStatus(`Posted. ${found.length} more from your screenshot — check the next one.`); }
+          else { impStatus("Posted."); $("#imp-thumb").hidden = true; }
+          showFound();
+        }
+        filter = formStatus === "pending" ? "open" : filter;
+        btn.textContent = "Posted ✓";
+        setTimeout(() => { if (!editing) btn.textContent = "Post bet"; }, 1200);
+      }
+    } catch (e2) {
+      err.textContent = e2?.code === "quota_exceeded" ? "The board is full. Delete some old bets to post new ones." : "Couldn't save the bet. Try again.";
+    } finally { btn.disabled = false; }
+  });
+
+  async function grade(id, status) {
+    try { await db.doc("bets/" + id).update({ status, settledAt: status === "pending" ? "" : new Date().toISOString() }); }
+    catch { showNotice("Couldn't update that bet. Try again."); }
+  }
+  async function removeBet(id) {
+    confirmDelete = null;
+    try { await db.doc("bets/" + id).delete(); } catch { showNotice("Couldn't delete that bet. Try again."); }
+  }
+
+  // ---- follower actions -------------------------------------------------
+  async function saveMine(next) {
+    if (writing) return;
+    writing = true; renderAll();
+    try {
+      await db.doc("fans/" + myId).set(next);
+    } catch (e) {
+      if (e?.code === "invalid_argument") {
+        canFollow = false;
+        showNotice("Couldn't save that. Sign out, sign back in, and try again.");
+      } else showNotice("Couldn't save that. Try again in a moment.");
+    } finally { writing = false; renderAll(); }
+  }
+  function mine() {
+    const f = fans[myId] || {};
+    return { following: !!f.following, tails: { ...(f.tails || {}) }, since: f.since || new Date().toISOString() };
+  }
+  function toggleFollow() {
+    const m = mine(); m.following = !m.following;
+    if (m.following) m.since = new Date().toISOString();
+    saveMine(m);
+  }
+  function setTail(betId, amount) {
+    const m = mine();
+    if (amount) { m.tails[betId] = amount; m.following = true; } else delete m.tails[betId];
+    saveMine(m);
+  }
+
+  // ---- screenshot / text import ------------------------------------------
+  let sample = null, canImages = false, impCtl = null, found = [];
+  const impStatus = (msg, bad) => { const s = $("#imp-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); };
+
+  const IMPORT_PROMPT = (extra) => `You read sports betting slips from sportsbooks like DraftKings, FanDuel, BetMGM, Caesars or ESPN Bet.
+Today's date is ${new Date().toDateString()} and the bettor's time zone is ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
+${extra}
+Extract every distinct bet. Reply with only a JSON array; each item:
+{"league": string (short league name like "NFL","NBA","MLB","NHL","NCAAF","NCAAB","WNBA","EPL","UFC"; infer from the teams if not shown),
+ "market": the bet type, chosen from the list for that league's sport below,
+ "detail": the sub-type from that bet type's [options] (the stat for a player prop, the futures market, the half's market, etc.), or "",
+ "player": for Player/Fighter/Team props, the player, fighter or team name, else "",
+ "side": for props, "Over", "Under", "Yes" or "No", else "",
+ "line": for over/under props, the number as a string like "74.5", else "",
+ "legs": for a parlay, same game parlay or teaser, an array of legs, each {"league","market","detail","player","side","line","pick","odds" (the leg's American odds if shown, else null)} using the same rules; else [],
+ "pick": string (what was bet, short, e.g. "Chiefs -3.5", "Over 47.5", "Jalen Brunson 25+ pts"; for a parlay or same game parlay list the legs separated by " + "),
+ "event": string (the matchup, e.g. "Bills @ Chiefs", or ""),
+ "odds": integer American odds of the whole bet (e.g. -110, 250),
+ "amount": number, the dollar stake / wager (not the payout),
+ "startsAt": game start as local "YYYY-MM-DDTHH:MM" if shown, else "",
+ "status": "pending" if not settled, else "won", "lost" or "push"}
+If a value is not visible, use "" (or null for odds/amount). If there are no bets, reply [].
+Bet types by sport (use these exact names):
+${catalogForPrompt()}
+Example: [{"league":"NFL","market":"Player prop","detail":"Rushing yards","player":"Derrick Henry","side":"Over","line":"89.5","pick":"Derrick Henry Over 89.5 Rushing yards","event":"Ravens @ Bengals","odds":-115,"amount":25,"startsAt":"2026-10-04T13:00","status":"pending"},{"league":"NFL","market":"Spread","detail":"","player":"","side":"","line":"","pick":"Chiefs -3.5","event":"Bills @ Chiefs","odds":-110,"amount":50,"startsAt":"2026-10-04T20:20","status":"pending"}]`;
+
+  function fillForm(x) {
+    if (!x) return;
+    const lg = x.league ? String(x.league).slice(0, 20) : getLeague();
+    const mk = Object.keys(marketsFor(SPORT_OF[lg] ? lg : "__other"));
+    const market = mk.find((m) => m.toLowerCase() === String(x.market || "").toLowerCase()) || "Other";
+    const dl = detailsFor(SPORT_OF[lg] ? lg : "__other", market) || [];
+    const detail = dl.find((d) => d.toLowerCase() === String(x.detail || "").toLowerCase()) || (x.detail ? String(x.detail).slice(0, 40) : "");
+    const legsIn = Array.isArray(x.legs) ? x.legs.filter((l) => l && typeof l === "object").slice(0, 15).map((l) => {
+      const ll = String(l.league || lg).slice(0, 20), key = SPORT_OF[ll] ? ll : "__other";
+      const lm = legMarkets(key).find((m) => m.toLowerCase() === String(l.market || "").toLowerCase()) || "Other";
+      const ld = (detailsFor(key, lm) || []).find((d) => d.toLowerCase() === String(l.detail || "").toLowerCase()) || (l.detail ? String(l.detail).slice(0, 40) : "");
+      return { league: ll, market: lm, detail: ld, player: String(l.player || "").slice(0, 40), side: l.side, line: l.line == null ? "" : String(l.line).slice(0, 8), pick: String(l.pick || "").slice(0, 120), odds: l.odds };
+    }) : [];
+    writeBetType({ league: lg, market, detail, player: String(x.player || "").slice(0, 40), side: x.side, line: x.line == null ? "" : String(x.line).slice(0, 8), legs: legsIn }, isParlay(market) ? "" : (x.pick || ""));
+    $("#f-event").value = String(x.event || "").slice(0, 100);
+    if (parseOdds(x.odds)) $("#f-odds").value = String(parseOdds(x.odds));
+    if (parseMoney(x.amount)) $("#f-amount").value = String(parseMoney(x.amount));
+    $("#f-time").value = /^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(x.startsAt || "") ? x.startsAt.slice(0, 16) : "";
+    setFormStatus(["won", "lost", "push"].includes(x.status) ? x.status : "pending");
+    updateHints();
+  }
+
+  function showFound() {
+    const box = $("#imp-found");
+    box.hidden = found.length < 2;
+    if (found.length < 2) { box.replaceChildren(); return; }
+    box.replaceChildren(h("span", { class: "eyebrow", text: `Found ${found.length} bets. Pick one to fill the form, post it, then pick the next.` }),
+      ...found.map((x, i) => h("button", {
+        type: "button", "aria-pressed": i === found.sel ? "true" : "false",
+        onclick: () => { found.sel = i; fillForm(x); showFound(); $("#f-pick").focus(); },
+      }, h("span", { text: `${x.league || "?"} · ${x.pick || "Unknown pick"}` }),
+         h("span", { text: [parseOdds(x.odds) ? fmtOdds(parseOdds(x.odds)) : "", parseMoney(x.amount) ? fmt$(parseMoney(x.amount)) : ""].filter(Boolean).join(" · ") }))));
+  }
+
+  async function runImport(input, images) {
+    if (!sample) return;
+    impCtl?.abort();
+    const ctl = impCtl = new AbortController();
+    $("#imp-stop").hidden = false;
+    impStatus("Reading your bet… this can take up to a minute");
+    try {
+      const res = await sample.json(input, { signal: ctl.signal, images, modelTier: "default" });
+      const list = (Array.isArray(res) ? res : res && typeof res === "object" ? [res] : []).filter((x) => x && typeof x === "object" && (x.pick || x.event));
+      found = list; found.sel = 0;
+      if (!list.length) { impStatus("Couldn't find a bet in that. Try a clearer screenshot of the bet slip.", true); showFound(); return; }
+      fillForm(list[0]);
+      showFound();
+      impStatus(list.length === 1 ? "Filled in. Check the details, then post." : "Filled in the first bet. Check it, then post.");
+      $("#f-pick").focus();
+    } catch (e) {
+      const c = e?.code;
+      if (c === "cancelled") impStatus("");
+      else if (c === "not_granted") impStatus("Only the site owner can import bets. Sign in with your owner account.", true);
+      else if (c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled" || c === "capability_removed") impStatus("Screenshot import isn't turned on for this site yet.", true);
+      else if (c === "images_unavailable") { canImages = false; impStatus("Screenshots can't be read here. Paste the bet text instead.", true); }
+      else if (c === "image_rejected") impStatus("That image couldn't be read. Use a PNG or JPG screenshot.", true);
+      else if (c === "rate_limited") impStatus("Too many imports at once. Wait a minute and try again.", true);
+      else if (c === "invalid_json") impStatus("Couldn't make sense of that one. Try again or fill the form by hand.", true);
+      else impStatus("Import failed. Try again, or fill the form by hand.", true);
+    } finally {
+      if (impCtl === ctl) { impCtl = null; $("#imp-stop").hidden = true; }
+    }
+  }
+
+  const looksLikeImage = (f) => f && (f.type?.startsWith("image/") || /\.(png|jpe?g|webp|gif|heic|heif|bmp)$/i.test(f.name || ""));
+
+  // Re-encode anything that isn't PNG/JPEG/WebP/GIF (e.g. iPhone HEIC, BMP) to PNG so Claude can read it.
+  async function normalizeImage(file) {
+    if (/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return file;
+    try {
+      const bmp = await createImageBitmap(file);
+      const c = document.createElement("canvas"); c.width = bmp.width; c.height = bmp.height;
+      c.getContext("2d").drawImage(bmp, 0, 0);
+      const out = await new Promise((r) => c.toBlob(r, "image/png"));
+      if (out) return out;
+    } catch {}
+    return null;
+  }
+
+  async function importImage(file) {
+    if (!looksLikeImage(file)) { impStatus("That wasn't an image file. Save the screenshot to your computer first, then drop it or use the button.", true); return; }
+    if (!sample) { impStatus("Screenshot import isn't turned on for this site yet.", true); return; }
+    const img = await normalizeImage(file);
+    if (!img) { impStatus("This browser can't open that image type. Use a PNG or JPG screenshot.", true); return; }
+    const t = $("#imp-thumb"); try { t.src = URL.createObjectURL(img); t.hidden = false; } catch {}
+    runImport(IMPORT_PROMPT("The attached image is a screenshot from a sportsbook app or website showing one or more bets."), img);
+  }
+
+  function openImport() {
+    if ($("#post-panel").hidden) { resetForm(); clearImport(); $("#post-panel").hidden = false; $("#profile-panel").hidden = true; renderHeader(); }
+    $("#import").scrollIntoView({ block: "nearest" });
+  }
+
+  $("#imp-file").addEventListener("change", (e) => { importImage(e.target.files?.[0]); e.target.value = ""; });
+  $("#imp-stop").addEventListener("click", () => impCtl?.abort());
+  $("#imp-text-go").addEventListener("click", () => {
+    const txt = $("#imp-text").value.trim().slice(0, 8000);
+    if (!txt) { impStatus("Paste some bet text first.", true); return; }
+    if (!sample) { impStatus("Screenshot import isn't turned on for this site yet.", true); return; }
+    runImport(IMPORT_PROMPT("Here is text copied from a sportsbook bet slip or share link:\n\n" + txt), undefined);
+  });
+
+  // The whole page is a drop target for the owner, so a drop anywhere imports.
+  let dragDepth = 0;
+  const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
+  const dropOverlay = $("#drop-overlay");
+  document.addEventListener("dragenter", (e) => {
+    if (!isAdmin || !hasFiles(e)) return;
+    e.preventDefault(); dragDepth++; dropOverlay.hidden = false;
+  });
+  document.addEventListener("dragover", (e) => {
+    if (!isAdmin || !hasFiles(e)) return;
+    e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+  });
+  document.addEventListener("dragleave", (e) => {
+    if (!isAdmin || !hasFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) dropOverlay.hidden = true;
+  });
+  document.addEventListener("drop", (e) => {
+    if (!isAdmin) return;
+    e.preventDefault(); dragDepth = 0; dropOverlay.hidden = true;
+    const files = [...(e.dataTransfer?.files || [])];
+    openImport();
+    if (!files.length) { impStatus("That drag didn't include an image file. Save the screenshot first, then drop the saved file or use the button.", true); return; }
+    importImage(files.find(looksLikeImage) || files[0]);
+  });
+  document.addEventListener("paste", (e) => {
+    if (!isAdmin || $("#post-panel").hidden) return;
+    const f = [...(e.clipboardData?.files || [])].find(looksLikeImage);
+    if (f) { e.preventDefault(); importImage(f); }
+  });
+
+  async function setupImport() {
+    if (!isAdmin) return;
+    $("#import").hidden = false;
+    sample = window.claude?.use ? await window.claude.use("sample") : null;
+    if (!sample) { impStatus("Screenshot import isn't turned on for this site yet.", true); return; }
+    const lim = await sample.limits().catch(() => null);
+    canImages = !!lim?.images;
+  }
+
+  function showNotice(msg) { const n = $("#notice"); n.textContent = msg; n.hidden = false; }
+
+  for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => { filter = b.dataset.f; renderSlips(); });
+
+  // ---- sign-in ----------------------------------------------------------
+  let auth = null;
+  function openSignIn(reason) {
+    if (!auth) return;
+    $("#si-why").textContent = reason || "Sign in to follow JMbets, tail bets and track how your tails do.";
+    $("#si-google").hidden = auth.inAppBrowser || auth.emailLinkPending;
+    $("#si-inapp").hidden = !auth.inAppBrowser || auth.emailLinkPending;
+    $("#si-msg").textContent = "";
+    $("#signin-panel").hidden = false;
+    $("#signin-panel").scrollIntoView({ block: "nearest" });
+  }
+  const siMsg = (t, ok) => { const m = $("#si-msg"); m.textContent = t; m.className = ok ? "ok" : "err"; };
+  $("#si-google").addEventListener("click", async () => {
+    try { await auth.google(); location.reload(); }
+    catch (e) { if (e?.code !== "auth/popup-closed-by-user" && e?.code !== "auth/cancelled-popup-request") siMsg("Google sign-in didn't work here. Try the email link instead."); }
+  });
+  $("#si-email-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = $("#si-email").value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) { siMsg("Enter a valid email address."); return; }
+    const btn = $("#si-email-btn"); btn.disabled = true;
+    try {
+      if (auth.emailLinkPending) { await auth.finishEmailLink(email); location.reload(); return; }
+      await auth.emailLink(email);
+      siMsg(`Sent. Open the link in the email from ${email} on this device to finish signing in.`, true);
+    } catch {
+      siMsg(auth.emailLinkPending ? "That link didn't work. It may have expired, so request a new one." : "Couldn't send the email. Check the address and try again.");
+    } finally { btn.disabled = false; }
+  });
+  $("#si-cancel").addEventListener("click", () => { $("#signin-panel").hidden = true; });
+  async function doSignOut() { try { await auth.signOut(); } finally { location.reload(); } }
+
+  // ---- one-time move of bets from the old claude.ai page -----------------
+  let migrateShown = false;
+  async function maybeOfferMigration() {
+    if (migrateShown || !isAdmin || bets.length || meta.migrated) return;
+    migrateShown = true;
+    let seed;
+    try { seed = await (await fetch("seed-bets.json", { cache: "no-store" })).json(); } catch { return; }
+    if (!Array.isArray(seed) || !seed.length) return;
+    const btn = h("button", { class: "btn small primary", type: "button", text: `Bring over ${seed.length} bets` });
+    const box = h("div", { class: "notice" }, `Your old JMbets page has ${seed.length} bets. Copy them here so your record carries over. `, btn);
+    btn.addEventListener("click", async () => {
+      btn.disabled = true; btn.textContent = "Copying…";
+      try {
+        for (const b of seed) { const { id, ...data } = b; await db.doc("bets/" + id).set(data); }
+        await db.doc("meta/profile").set({ ...meta, migrated: true });
+        box.remove();
+      } catch { btn.disabled = false; btn.textContent = "Try again"; }
+    });
+    $("#notice").after(box);
+  }
+
+  // ---- boot -------------------------------------------------------------
+  async function boot() {
+    const claude = await Promise.race([window.jmbReady || Promise.resolve(null), new Promise((r) => setTimeout(() => r(null), 15000))]).catch(() => null);
+    if (!claude?.use) { showNotice("Couldn't connect to the JMbets database. Check your connection and reload the page."); renderAll(); return; }
+    auth = claude.auth || null;
+    [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (user) {
+      let isOwner;
+      [myId, isAdmin, isOwner, canFollow] = await Promise.all([user.id(), user.canEdit(), user.isOwner(), user.can("data.write")]);
+      isAdmin = isAdmin || isOwner;
+    }
+    setupImport();
+    if (!db) { renderAll(); return; }
+    if (!isAdmin && myId && canFollow === false) showNotice("Couldn't save that. Sign out, sign back in, and try again.");
+    if (auth?.emailLinkPending) openSignIn("Enter the email address you used to finish signing in.");
+
+    db.collection("bets").orderBy("postedAt", "desc").limit(1000).onSnapshot((snap) => {
+      bets = snap.docs.map((d) => {
+        const x = d.data() || {};
+        const odds = parseOdds(x.odds) || -110;
+        const amount = Number(x.amount) > 0 ? Number(x.amount) : 0;
+        const status = ["won", "lost", "push"].includes(x.status) ? x.status : "pending";
+        const legsN = Array.isArray(x.legs) ? x.legs.filter((l) => l && typeof l === "object").map((l) => ({ ...l, pick: String(l.pick || ""), league: String(l.league || ""), odds: parseOdds(l.odds) })) : [];
+        return { ...x, legs: legsN, id: d.id, league: String(x.league || x.sport || "Other"), odds, amount, status, profit: profitOf(status, odds, amount) };
+      });
+      renderAll();
+      if (!snap.metadata?.fromCache) maybeOfferMigration();
+    }, () => showNotice("Live updates stopped. Reload the page to reconnect."));
+
+    db.collection("fans").limit(1000).onSnapshot((snap) => {
+      fans = {};
+      for (const d of snap.docs) fans[d.id] = d.data() || {};
+      renderAll();
+    }, () => {});
+
+    db.doc("meta/profile").onSnapshot((snap) => { meta = snap.exists ? snap.data() : {}; renderHeader(); }, () => {});
+    renderAll();
+  }
+  setLeague("NFL");
+  updateHints();
+  renderAll();
+  boot();
+})();
+</script>
+</body>
+</html>
