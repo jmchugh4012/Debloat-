@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -15,60 +15,8 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23b5f23d'/%3E%3Ctext x='16' y='22' font-family='Arial Narrow,Arial,sans-serif' font-weight='700' font-size='15' fill='%23141810' text-anchor='middle'%3EJM%3C/text%3E%3C/svg%3E"
     />
     <style>
-      /* Layout: a betting ledger. Summary strip, open slips, chart + splits, then the full ledger. */
+      /* Dark only. Layout: a betting ledger. Summary strip, open slips, chart + splits, then the full ledger. */
       :root {
-        --bg: #f4f6ef;
-        --surface: #ffffff;
-        --surface-2: #f0f3e8;
-        --border: #e0e4d6;
-        --rule: #cdd3c1;
-        --text: #141810;
-        --muted: #666e5c;
-        --accent: #b5f23d;
-        --accent-text: #141810;
-        --accent-ink: #4f7d0b;
-        --win: #3f7d14;
-        --win-bg: #e3f2ea;
-        --loss: #c0352b;
-        --loss-bg: #fbe7e5;
-        --push: #727872;
-        --push-bg: #ecedea;
-        --pending: #a46207;
-        --pending-bg: #fbf0dc;
-        --cash: #5b4bb5;
-        --cash-bg: #ece9f8;
-        --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
-        --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-        --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-        --radius: 10px;
-        color-scheme: light;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) {
-          --bg: #0e110b;
-          --surface: #151912;
-          --surface-2: #1c2118;
-          --border: #262c21;
-          --rule: #343b2d;
-          --text: #ebf0e4;
-          --muted: #8e9884;
-          --accent: #b5f23d;
-          --accent-text: #10140b;
-          --accent-ink: #b5f23d;
-          --win: #8fd14f;
-          --win-bg: #15291f;
-          --loss: #f0695e;
-          --loss-bg: #331a18;
-          --push: #9aa19b;
-          --push-bg: #222624;
-          --pending: #e0a43a;
-          --pending-bg: #30260f;
-          --cash: #a497f0;
-          --cash-bg: #24203b;
-          color-scheme: dark;
-        }
-      }
-      :root[data-theme="dark"] {
         --bg: #0e110b;
         --surface: #151912;
         --surface-2: #1c2118;
@@ -89,6 +37,10 @@
         --pending-bg: #30260f;
         --cash: #a497f0;
         --cash-bg: #24203b;
+        --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+        --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        --radius: 10px;
         color-scheme: dark;
       }
 
@@ -561,7 +513,6 @@
           <span class="tagline">Picks &amp; results</span>
         </div>
         <div class="row">
-          <button id="themeBtn">Dark mode</button>
           <button id="exportCsvBtn">Export CSV</button>
           <button id="exportJsonBtn">Backup</button>
           <button id="importBtn">Restore</button>
@@ -788,11 +739,10 @@
               return {
                 bets: Array.isArray(d.bets) ? d.bets : [],
                 bankroll: Number(d.bankroll) || 0,
-                theme: d.theme || "",
               };
             }
           } catch (e) {}
-          return { bets: [], bankroll: 0, theme: "" };
+          return { bets: [], bankroll: 0 };
         }
         let state = load();
         function save() {
@@ -1802,26 +1752,6 @@
           renderStats(list);
           renderChart(list);
         });
-
-        // ---------- theme ----------
-        // Dark by default; the toggle remembers a switch to light.
-        function applyTheme() {
-          document.documentElement.setAttribute(
-            "data-theme",
-            isDark() ? "dark" : "light",
-          );
-          $("themeBtn").textContent = isDark() ? "Light mode" : "Dark mode";
-        }
-        function isDark() {
-          return state.theme !== "light";
-        }
-        $("themeBtn").addEventListener("click", () => {
-          state.theme = isDark() ? "light" : "dark";
-          applyTheme();
-          save();
-          render();
-        });
-        applyTheme();
 
         // ---------- import / export ----------
         function download(name, text, type) {
