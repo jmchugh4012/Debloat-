@@ -1,80 +1,78 @@
 <title>JMbets</title>
+<link id="app-fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" />
     <style id="app-style">
-      /* JMbets theme: night (default) + day */
+      /* Layout: a betting ledger. Summary strip, open slips, chart + splits, then the full ledger. */
       :root {
-        --bg: #070b10;
-        --bg-glow: rgba(190, 242, 60, 0.07);
-        --surface: #0f151d;
-        --surface-2: #17202b;
-        --border: #222d3a;
-        --text: #eef2f6;
-        --muted: #8593a5;
-        --accent: #bef23c;
-        --accent-text: #0a1004;
-        --gold: #f5c542;
-        --win: #4ade80;
-        --win-bg: rgba(74, 222, 128, 0.12);
-        --loss: #ff6b6b;
-        --loss-bg: rgba(255, 107, 107, 0.12);
-        --push: #9aa6b5;
-        --push-bg: rgba(154, 166, 181, 0.14);
-        --pending: #f5c542;
-        --pending-bg: rgba(245, 197, 66, 0.13);
-        --cash: #a78bfa;
-        --cash-bg: rgba(167, 139, 250, 0.14);
-        --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
-        --radius: 14px;
+        --bg: #f3f4f2;
+        --surface: #ffffff;
+        --surface-2: #f1f2ef;
+        --border: #e1e3df;
+        --rule: #cfd2cc;
+        --text: #131614;
+        --muted: #686e69;
+        --accent: #131614;
+        --accent-text: #ffffff;
+        --win: #157347;
+        --win-bg: #e3f2ea;
+        --loss: #c0352b;
+        --loss-bg: #fbe7e5;
+        --push: #727872;
+        --push-bg: #ecedea;
+        --pending: #a46207;
+        --pending-bg: #fbf0dc;
+        --cash: #5b4bb5;
+        --cash-bg: #ece9f8;
+        --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+        --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+        --radius: 10px;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0f1110;
+          --surface: #161917;
+          --surface-2: #1d201e;
+          --border: #272b28;
+          --rule: #353a36;
+          --text: #e9ece9;
+          --muted: #8d948e;
+          --accent: #e9ece9;
+          --accent-text: #0f1110;
+          --win: #4cc38a;
+          --win-bg: #15291f;
+          --loss: #f0695e;
+          --loss-bg: #331a18;
+          --push: #9aa19b;
+          --push-bg: #222624;
+          --pending: #e0a43a;
+          --pending-bg: #30260f;
+          --cash: #a497f0;
+          --cash-bg: #24203b;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0f1110;
+        --surface: #161917;
+        --surface-2: #1d201e;
+        --border: #272b28;
+        --rule: #353a36;
+        --text: #e9ece9;
+        --muted: #8d948e;
+        --accent: #e9ece9;
+        --accent-text: #0f1110;
+        --win: #4cc38a;
+        --win-bg: #15291f;
+        --loss: #f0695e;
+        --loss-bg: #331a18;
+        --push: #9aa19b;
+        --push-bg: #222624;
+        --pending: #e0a43a;
+        --pending-bg: #30260f;
+        --cash: #a497f0;
+        --cash-bg: #24203b;
         color-scheme: dark;
-      }
-      @media (prefers-color-scheme: light) {
-        :root:not([data-theme="dark"]) {
-        --bg: #f3f5ef;
-        --bg-glow: rgba(101, 163, 13, 0.1);
-        --surface: #ffffff;
-        --surface-2: #eef1e8;
-        --border: #dde2d5;
-        --text: #10160c;
-        --muted: #5d6857;
-        --accent: #4d7c0f;
-        --accent-text: #ffffff;
-        --gold: #a16207;
-        --win: #15803d;
-        --win-bg: #dcfce7;
-        --loss: #c81e1e;
-        --loss-bg: #fee2e2;
-        --push: #6b7280;
-        --push-bg: #e5e7eb;
-        --pending: #a16207;
-        --pending-bg: #fef3c7;
-        --cash: #7c3aed;
-        --cash-bg: #ede9fe;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.04);
-        color-scheme: light;
-      }
-      }
-      :root[data-theme="light"] {
-        --bg: #f3f5ef;
-        --bg-glow: rgba(101, 163, 13, 0.1);
-        --surface: #ffffff;
-        --surface-2: #eef1e8;
-        --border: #dde2d5;
-        --text: #10160c;
-        --muted: #5d6857;
-        --accent: #4d7c0f;
-        --accent-text: #ffffff;
-        --gold: #a16207;
-        --win: #15803d;
-        --win-bg: #dcfce7;
-        --loss: #c81e1e;
-        --loss-bg: #fee2e2;
-        --push: #6b7280;
-        --push-bg: #e5e7eb;
-        --pending: #a16207;
-        --pending-bg: #fef3c7;
-        --cash: #7c3aed;
-        --cash-bg: #ede9fe;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.04);
-        color-scheme: light;
       }
 
       * {
@@ -82,28 +80,15 @@
       }
       body {
         margin: 0;
-        background:
-          radial-gradient(
-            1200px 500px at 85% -10%,
-            var(--bg-glow),
-            transparent 60%
-          ),
-          var(--bg);
-        background-attachment: fixed;
-        min-height: 100vh;
+        background: var(--bg);
         color: var(--text);
-        font:
-          14px/1.45 system-ui,
-          -apple-system,
-          "Segoe UI",
-          Roboto,
-          sans-serif;
+        font: 14px/1.5 var(--font-body);
         -webkit-font-smoothing: antialiased;
       }
       .wrap {
-        max-width: 1180px;
+        max-width: 1120px;
         margin: 0 auto;
-        padding: 20px 16px 60px;
+        padding: 28px 16px 64px;
       }
       header {
         display: flex;
@@ -111,62 +96,42 @@
         justify-content: space-between;
         gap: 12px;
         flex-wrap: wrap;
-        margin-bottom: 18px;
-      }
-      h1 {
-        font-size: 22px;
-        margin: 0;
-        letter-spacing: -0.01em;
+        margin-bottom: 24px;
       }
       .brand {
         display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .logo {
-        width: 44px;
-        height: 44px;
-        flex: none;
+        align-items: baseline;
+        gap: 10px;
       }
       .wordmark {
-        font-size: 28px;
-        font-weight: 900;
-        font-style: italic;
-        letter-spacing: -0.04em;
+        font-family: var(--font-display);
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
         line-height: 1;
         margin: 0;
+        text-transform: uppercase;
       }
       .wordmark .jm {
-        color: var(--accent);
+        background: var(--text);
+        color: var(--bg);
+        padding: 0 5px;
+        margin-right: 2px;
+        border-radius: 3px;
       }
       .tagline {
-        font-size: 11px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      h2,
+      .section-title {
+        font-family: var(--font-display);
+        font-size: 15px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: var(--muted);
-        margin-top: 4px;
-      }
-      .stat {
-        position: relative;
-        overflow: hidden;
-      }
-      .stat.hero {
-        border-color: var(--accent);
-        background:
-          linear-gradient(135deg, var(--bg-glow), transparent 70%),
-          var(--surface);
-      }
-      .stat.hero::before {
-        content: "";
-        position: absolute;
-        inset: 0 auto 0 0;
-        width: 4px;
-        background: var(--accent);
-      }
-      h2 {
-        font-size: 15px;
+        letter-spacing: 0.08em;
         margin: 0 0 12px;
+        text-wrap: balance;
       }
       .muted {
         color: var(--muted);
@@ -181,16 +146,18 @@
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 16px;
+        padding: 18px;
+        min-width: 0;
       }
       button,
       .btn {
         font: inherit;
-        border: 1px solid var(--border);
-        background: var(--surface);
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--rule);
+        background: transparent;
         color: var(--text);
-        border-radius: 8px;
+        border-radius: 6px;
         padding: 7px 12px;
         cursor: pointer;
         white-space: nowrap;
@@ -205,7 +172,8 @@
         font-weight: 600;
       }
       button.primary:hover {
-        filter: brightness(1.08);
+        opacity: 0.88;
+        background: var(--accent);
       }
       button.small {
         padding: 3px 8px;
@@ -220,9 +188,9 @@
         font: inherit;
         color: var(--text);
         background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 7px 9px;
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        padding: 8px 10px;
         width: 100%;
         min-width: 0;
       }
@@ -230,36 +198,83 @@
       select:focus,
       textarea:focus,
       button:focus-visible {
-        outline: 2px solid var(--accent);
+        outline: 2px solid var(--text);
         outline-offset: 1px;
       }
       label {
         display: block;
         font-size: 12px;
+        font-weight: 500;
         color: var(--muted);
         margin-bottom: 4px;
       }
 
+      /* summary strip */
       .stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 12px;
-        margin-bottom: 16px;
+        grid-template-columns: 1.4fr repeat(5, 1fr);
+        padding: 0;
+        margin-bottom: 20px;
+      }
+      .stat {
+        padding: 16px 18px;
+        border-left: 1px solid var(--border);
+        min-width: 0;
+      }
+      .stat:first-child {
+        border-left: none;
       }
       .stat .label {
         font-size: 12px;
         color: var(--muted);
       }
       .stat .value {
-        font-size: 22px;
-        font-weight: 650;
-        margin-top: 2px;
+        font-family: var(--font-display);
+        font-size: 30px;
+        font-weight: 600;
+        line-height: 1.1;
+        margin-top: 4px;
         font-variant-numeric: tabular-nums;
+      }
+      .stat:first-child .value {
+        font-size: 40px;
       }
       .stat .sub {
         font-size: 12px;
         color: var(--muted);
-        margin-top: 2px;
+        margin-top: 4px;
+      }
+      @media (max-width: 900px) {
+        .stats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .stat:nth-child(4) {
+          border-left: none;
+        }
+        .stat:nth-child(n + 4) {
+          border-top: 1px solid var(--border);
+        }
+      }
+      @media (max-width: 520px) {
+        .stats {
+          grid-template-columns: 1fr 1fr;
+        }
+        .stat:first-child {
+          grid-column: 1 / -1;
+        }
+        .stat {
+          border-left: none;
+          border-top: 1px solid var(--border);
+        }
+        .stat:first-child {
+          border-top: none;
+        }
+        .stat:nth-child(odd):not(:first-child) {
+          border-left: 1px solid var(--border);
+        }
+        .stat:last-child:nth-child(even) {
+          grid-column: 1 / -1;
+        }
       }
       .pos {
         color: var(--win);
@@ -271,8 +286,8 @@
       .grid2 {
         display: grid;
         grid-template-columns: 2fr 1fr;
-        gap: 16px;
-        margin-bottom: 16px;
+        gap: 20px;
+        margin-bottom: 20px;
       }
       @media (max-width: 860px) {
         .grid2 {
@@ -294,16 +309,24 @@
 
       .tabs {
         display: flex;
-        gap: 4px;
-        margin-bottom: 10px;
+        gap: 16px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--border);
       }
       .tabs button {
-        padding: 4px 10px;
-        font-size: 12px;
+        border: none;
+        border-radius: 0;
+        background: none;
+        padding: 6px 0 8px;
+        font-size: 13px;
+        color: var(--muted);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
       }
       .tabs button[aria-selected="true"] {
-        background: var(--surface-2);
+        color: var(--text);
         font-weight: 600;
+        border-bottom-color: var(--text);
       }
 
       table {
@@ -314,15 +337,18 @@
       th,
       td {
         text-align: left;
-        padding: 8px 8px;
+        padding: 10px 8px;
         border-bottom: 1px solid var(--border);
         vertical-align: middle;
       }
       th {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--muted);
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
         white-space: nowrap;
+        border-bottom-color: var(--rule);
       }
       th.sortable {
         cursor: pointer;
@@ -335,11 +361,18 @@
       th.num {
         text-align: right;
       }
+      td.odds {
+        font-family: var(--font-mono);
+        font-size: 13px;
+      }
       tr:last-child td {
         border-bottom: none;
       }
       .table-scroll {
         overflow-x: auto;
+      }
+      .ledger {
+        min-width: 680px;
       }
       .event {
         font-weight: 600;
@@ -348,43 +381,50 @@
         font-size: 12px;
         color: var(--muted);
       }
+      .event-note {
+        font-size: 12px;
+        color: var(--muted);
+        font-style: italic;
+      }
 
+      /* result marks: colored text with a small square, no bubbles */
       .pill {
-        display: inline-block;
-        font-size: 11px;
-        font-weight: 650;
-        padding: 2px 8px;
-        border-radius: 999px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .pill::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+        background: currentColor;
       }
       .pill.won {
         color: var(--win);
-        background: var(--win-bg);
       }
       .pill.lost {
         color: var(--loss);
-        background: var(--loss-bg);
       }
       .pill.push,
       .pill.void {
         color: var(--push);
-        background: var(--push-bg);
       }
       .pill.pending {
         color: var(--pending);
-        background: var(--pending-bg);
       }
       .pill.cashout {
         color: var(--cash);
-        background: var(--cash-bg);
       }
 
       .filters {
         display: grid;
         grid-template-columns: 2fr repeat(4, 1fr);
         gap: 8px;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
       }
       @media (max-width: 760px) {
         .filters {
@@ -408,31 +448,34 @@
 
       dialog {
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 12px;
         background: var(--surface);
         color: var(--text);
         padding: 0;
-        width: min(640px, calc(100vw - 32px));
+        width: min(620px, calc(100vw - 32px));
         max-height: calc(100vh - 32px);
       }
       dialog::backdrop {
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(10, 12, 11, 0.5);
       }
       .dlg-head {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 14px 18px;
+        padding: 14px 20px;
         border-bottom: 1px solid var(--border);
       }
       .dlg-head h2 {
         margin: 0;
       }
+      .dlg-head button {
+        border: none;
+      }
       .dlg-body {
-        padding: 16px 18px;
+        padding: 18px 20px;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        gap: 14px;
       }
       .dlg-body .full {
         grid-column: 1 / -1;
@@ -447,7 +490,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 8px;
-        padding: 12px 18px;
+        padding: 12px 20px;
         border-top: 1px solid var(--border);
         flex-wrap: wrap;
       }
@@ -457,24 +500,27 @@
       }
       .preview b {
         color: var(--text);
+        font-family: var(--font-mono);
+        font-weight: 500;
       }
       .hint {
         font-size: 11px;
         color: var(--muted);
-        margin-top: 3px;
+        margin-top: 4px;
+        font-family: var(--font-mono);
       }
       .hidden {
         display: none !important;
       }
       .toast {
         position: fixed;
-        bottom: 20px;
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px));
         left: 50%;
         transform: translateX(-50%);
         background: var(--text);
         color: var(--bg);
         padding: 8px 14px;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 13px;
         opacity: 0;
         transition: opacity 0.2s;
@@ -483,35 +529,38 @@
       .toast.show {
         opacity: 1;
       }
+      @media (prefers-reduced-motion: reduce) {
+        .toast {
+          transition: none;
+        }
+      }
 
       /* live page: owner/visitor modes */
       .mode-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px 16px;
         flex-wrap: wrap;
         font-size: 13px;
         color: var(--muted);
-        border: 1px dashed var(--border);
-        border-radius: 10px;
-        padding: 8px 12px;
-        margin-bottom: 16px;
+        margin: -10px 0 20px;
       }
       .mode-bar b {
         color: var(--text);
+        font-weight: 600;
       }
-      .mode-bar .dot {
+      .live-dot {
         display: inline-block;
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        background: var(--accent);
+        background: var(--win);
         margin-right: 6px;
         vertical-align: 1px;
       }
       .plays-card {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
       }
       .plays-head {
         display: flex;
@@ -525,32 +574,37 @@
       }
       .plays {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 12px;
       }
+      /* each open play is drawn as a bet slip */
       .play {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px 14px;
-        background: var(--surface-2);
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        background: var(--surface);
         display: grid;
-        gap: 6px;
         min-width: 0;
+      }
+      .play-main {
+        padding: 12px 14px 10px;
+        display: grid;
+        gap: 4px;
       }
       .play-top {
         display: flex;
         justify-content: space-between;
         gap: 8px;
+        font-family: var(--font-mono);
         font-size: 11px;
-        font-weight: 650;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
         color: var(--muted);
       }
       .play-pick {
-        font-weight: 700;
-        font-size: 15px;
-        line-height: 1.3;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 20px;
+        line-height: 1.15;
+        text-wrap: balance;
       }
       .play-event {
         font-size: 12px;
@@ -561,16 +615,22 @@
         justify-content: space-between;
         align-items: baseline;
         gap: 8px;
+        padding: 9px 14px 11px;
+        border-top: 1px dashed var(--rule);
+        font-family: var(--font-mono);
         font-variant-numeric: tabular-nums;
       }
       .play-odds .o {
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--accent);
+        font-size: 18px;
+        font-weight: 500;
       }
       .play-odds .u {
         font-size: 12px;
         color: var(--muted);
+        white-space: nowrap;
+      }
+      .play-top span:last-child {
+        white-space: nowrap;
       }
       .readonly .col-actions {
         display: none;
@@ -586,14 +646,14 @@
         inset: 0;
         display: grid;
         place-items: center;
-        background: rgba(0, 0, 0, 0.35);
+        background: rgba(10, 12, 11, 0.35);
         z-index: 50;
       }
       .saving span {
         background: var(--surface);
         border: 1px solid var(--border);
         padding: 10px 16px;
-        border-radius: 10px;
+        border-radius: 8px;
         font-weight: 600;
       }
     </style>
@@ -602,29 +662,8 @@
     <div class="wrap">
       <header>
         <div class="brand">
-          <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
-            <rect width="48" height="48" rx="12" fill="var(--accent)" />
-            <path
-              d="M9 34 L19 24 L26 29 L39 14"
-              fill="none"
-              stroke="var(--accent-text)"
-              stroke-width="4.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M31 14 H39 V22"
-              fill="none"
-              stroke="var(--accent-text)"
-              stroke-width="4.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-          <div>
-            <h1 class="wordmark"><span class="jm">JM</span>bets</h1>
-            <div class="tagline">Track every play</div>
-          </div>
+          <h1 class="wordmark"><span class="jm">JM</span>bets</h1>
+          <span class="tagline">Picks &amp; results</span>
         </div>
         <div class="row">
           <button id="exportCsvBtn" data-owner hidden>Export CSV</button>
@@ -641,7 +680,7 @@
       </header>
 
       <div class="mode-bar" id="modeBar">
-        <span><span class="dot"></span><b>Live picks</b> · Open plays and results, posted as they happen</span>
+        <span><span class="live-dot"></span><b>Live</b> · Plays are posted here before they start. Results update as they settle.</span>
         <span id="modeNote">Viewing only</span>
       </div>
 
@@ -653,7 +692,7 @@
         <div class="plays" id="plays"></div>
       </section>
 
-      <section class="stats" id="stats"></section>
+      <section class="card stats" id="stats"></section>
 
       <section class="grid2">
         <div class="card">
@@ -722,7 +761,7 @@
           </select>
         </div>
         <div class="table-scroll">
-          <table>
+          <table class="ledger">
             <thead>
               <tr>
                 <th class="sortable" data-sort="date">Date</th>
@@ -878,6 +917,7 @@
         const SOURCE = {
           reset: (document.head.querySelector("style") || {}).textContent || "",
           style: $("app-style") ? $("app-style").outerHTML : "",
+          fonts: $("app-fonts") ? $("app-fonts").outerHTML : "",
           root: $("appRoot").outerHTML,
           script: $("app-script").outerHTML,
         };
@@ -915,6 +955,8 @@
             SOURCE.reset +
             "</style></head><body>" +
             "<title>JMbets</title>\n" +
+            SOURCE.fonts +
+            "\n" +
             SOURCE.style +
             "\n" +
             SOURCE.root +
@@ -1041,10 +1083,12 @@
             ? open
                 .map(
                   (b) => `<div class="play">
-                <div class="play-top"><span>${esc(b.sport || "Bet")} · ${esc(b.type || "")}</span><span>${esc(fmtDate(b.date))}</span></div>
-                <div class="play-pick">${esc(describe(b))}</div>
-                <div class="play-event">${esc(b.event)}${b.book ? " · " + esc(b.book) : ""}</div>
-                <div class="play-odds"><span class="o">${esc(b.oddsInput || toAmerican(b.odds))}</span><span class="u">${esc(fmtMoney(b.stake))} to win ${esc(fmtMoney(b.stake * (b.odds - 1)))}</span></div>
+                <div class="play-main">
+                  <div class="play-top"><span>${esc(b.sport || "Bet")} · ${esc(b.type || "")}</span><span>${esc(fmtDate(b.date))}</span></div>
+                  <div class="play-pick">${esc(describe(b))}</div>
+                  <div class="play-event">${esc(b.event)}${b.book ? " · " + esc(b.book) : ""}</div>
+                </div>
+                <div class="play-odds"><span class="o">${esc(b.oddsInput || toAmerican(b.odds))}</span><span class="u">Risk ${esc(fmtMoney(b.stake))} · Win ${esc(fmtMoney(b.stake * (b.odds - 1)))}</span></div>
               </div>`,
                 )
                 .join("")
@@ -1538,8 +1582,8 @@
           ];
           $("stats").innerHTML = tiles
             .map(
-              (t, i) =>
-                `<div class="card stat${i === 0 ? " hero" : ""}"><div class="label">${t.label}</div><div class="value ${t.c || ""}">${esc(t.value)}</div><div class="sub">${esc(t.sub)}</div></div>`,
+              (t) =>
+                `<div class="stat"><div class="label">${t.label}</div><div class="value ${t.c || ""}">${esc(t.value)}</div><div class="sub">${esc(t.sub)}</div></div>`,
             )
             .join("");
         }
@@ -1620,14 +1664,14 @@
                   .slice(1)
                   .map(
                     (p, i) =>
-                      `<circle cx="${x(i + 1)}" cy="${y(p.y)}" r="3" fill="${lineColor}"><title>${esc(fmtDate(p.b.date) + " · " + p.b.event + " · " + fmtSigned(profitOf(p.b)) + " → " + fmtMoney(p.y))}</title></circle>`,
+                      `<circle cx="${x(i + 1)}" cy="${y(p.y)}" r="${i === pts.length - 2 ? 4 : 2}" fill="${lineColor}"><title>${esc(fmtDate(p.b.date) + " · " + p.b.event + " · " + fmtSigned(profitOf(p.b)) + " → " + fmtMoney(p.y))}</title></circle>`,
                   )
                   .join("")
               : "";
           wrap.innerHTML = `<svg id="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Cumulative profit chart">
             ${grid}
             <line x1="${padL}" x2="${W - padR}" y1="${zeroY}" y2="${zeroY}" stroke="${muted}" stroke-dasharray="3 3" stroke-width="1"/>
-            <path d="${area}" fill="${lineColor}" opacity="0.10"/>
+            <path d="${area}" fill="${lineColor}" opacity="0.07"/>
             <path d="${line}" fill="none" stroke="${lineColor}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
             ${dots}
             <text x="${padL}" y="${H - 6}" font-size="11" fill="${muted}">${esc(fmtDate(firstDate))}</text>
@@ -1692,18 +1736,18 @@
                   : `<span class="${cls(p)}">${esc(fmtSigned(p))}</span>`;
               const quick =
                 b.status === "pending"
-                  ? `<button class="small" data-act="won" data-id="${b.id}" title="Mark won">✓ W</button><button class="small" data-act="lost" data-id="${b.id}" title="Mark lost">✗ L</button>`
+                  ? `<button class="small" data-act="won" data-id="${b.id}" title="Mark won">Won</button><button class="small" data-act="lost" data-id="${b.id}" title="Mark lost">Lost</button>`
                   : "";
               const sub = [describe(b), b.book].filter(Boolean).join(" · ");
               return `<tr>
                 <td style="white-space:nowrap">${esc(fmtDate(b.date))}</td>
-                <td><div class="event">${esc(b.event)}</div>${sub ? `<div class="event-sub">${esc(sub)}</div>` : ""}${b.notes ? `<div class="event-sub" title="${esc(b.notes)}">📝 ${esc(b.notes.length > 60 ? b.notes.slice(0, 60) + "…" : b.notes)}</div>` : ""}</td>
+                <td><div class="event">${esc(b.event)}</div>${sub ? `<div class="event-sub">${esc(sub)}</div>` : ""}${b.notes ? `<div class="event-note" title="${esc(b.notes)}">${esc(b.notes.length > 60 ? b.notes.slice(0, 60) + "…" : b.notes)}</div>` : ""}</td>
                 <td>${esc(b.sport || "—")}</td>
-                <td class="num" title="${b.odds.toFixed(2)} decimal">${esc(b.oddsInput || toAmerican(b.odds))}</td>
+                <td class="num odds" title="${b.odds.toFixed(2)} decimal">${esc(b.oddsInput || toAmerican(b.odds))}</td>
                 <td class="num">${esc(fmtMoney(b.stake))}</td>
                 <td><span class="pill ${b.status}">${labels[b.status]}</span></td>
                 <td class="num" style="white-space:nowrap">${pl}</td>
-                <td class="col-actions"><div class="actions">${quick}<button class="small" data-act="edit" data-id="${b.id}">Edit</button><button class="small danger" data-act="del" data-id="${b.id}" aria-label="Delete">🗑</button></div></td>
+                <td class="col-actions"><div class="actions">${quick}<button class="small" data-act="edit" data-id="${b.id}">Edit</button><button class="small danger" data-act="del" data-id="${b.id}" >Delete</button></div></td>
               </tr>`;
             })
             .join("");
