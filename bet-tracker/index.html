@@ -66,7 +66,11 @@
       body {
         margin: 0;
         background:
-          radial-gradient(1200px 500px at 85% -10%, var(--bg-glow), transparent 60%),
+          radial-gradient(
+            1200px 500px at 85% -10%,
+            var(--bg-glow),
+            transparent 60%
+          ),
           var(--bg);
         background-attachment: fixed;
         min-height: 100vh;
@@ -539,7 +543,7 @@
               Sportsbook
             </button>
             <button role="tab" data-key="type" aria-selected="false">
-              Bet type
+              Bet
             </button>
           </div>
           <div class="table-scroll" id="breakdown"></div>
@@ -607,12 +611,7 @@
           </div>
           <div>
             <label for="bSport">Sport / League</label>
-            <input
-              id="bSport"
-              list="sportList"
-              placeholder="NFL, NBA, Soccer…"
-            />
-            <datalist id="sportList"></datalist>
+            <select id="bSport"></select>
           </div>
           <div class="full">
             <label for="bEvent">Event</label>
@@ -623,27 +622,9 @@
               autocomplete="off"
             />
           </div>
-          <div class="full">
-            <label for="bPick">Pick / Selection</label>
-            <input
-              id="bPick"
-              placeholder="e.g. Chiefs -3.5, Over 47.5, Mahomes 2+ TD"
-              autocomplete="off"
-            />
-          </div>
           <div>
-            <label for="bType">Bet type</label>
-            <select id="bType">
-              <option>Moneyline</option>
-              <option>Spread</option>
-              <option>Total</option>
-              <option>Prop</option>
-              <option>Parlay</option>
-              <option>Teaser</option>
-              <option>Futures</option>
-              <option>Live</option>
-              <option>Other</option>
-            </select>
+            <label for="bType">Bet</label>
+            <select id="bType"></select>
           </div>
           <div>
             <label for="bBook">Sportsbook</label>
@@ -653,6 +634,33 @@
               placeholder="DraftKings, FanDuel…"
             />
             <datalist id="bookList"></datalist>
+          </div>
+          <div class="full" id="playerWrap">
+            <label for="bPlayer">Player</label>
+            <input
+              id="bPlayer"
+              list="playerList"
+              placeholder="e.g. Patrick Mahomes"
+              autocomplete="off"
+            />
+            <datalist id="playerList"></datalist>
+          </div>
+          <div id="sideWrap">
+            <label for="bSide">Side</label>
+            <select id="bSide"></select>
+          </div>
+          <div id="lineWrap">
+            <label for="bLine" id="lineLabel">Line</label>
+            <input
+              id="bLine"
+              type="number"
+              step="any"
+              placeholder="e.g. 274.5"
+            />
+          </div>
+          <div class="full">
+            <label for="bPick" id="pickLabel">Pick / Selection</label>
+            <input id="bPick" autocomplete="off" />
           </div>
           <div>
             <label for="bOdds">Odds</label>
@@ -692,9 +700,7 @@
           <div class="preview" id="preview"></div>
           <div class="row">
             <button type="button" id="cancelDlg">Cancel</button>
-            <button type="submit" class="primary" id="saveBtn">
-              Save bet
-            </button>
+            <button type="submit" class="primary" id="saveBtn">Save bet</button>
           </div>
         </div>
       </form>
@@ -803,6 +809,265 @@
         const uid = () =>
           Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
+        // ---------- sports & markets ----------
+        // Each market: [name, kind]. Kinds: ml (pick a side), spread (team +
+        // line), total (over/under + line), ou (player over/under + line),
+        // yn (player yes/no), pick (free selection).
+        const LINES = {
+          football: [
+            ["Moneyline", "ml"],
+            ["Spread", "spread"],
+            ["Total Points", "total"],
+            ["Team Total", "total"],
+            ["1st Half Moneyline", "ml"],
+            ["1st Half Spread", "spread"],
+            ["1st Half Total", "total"],
+            ["1st Quarter Spread", "spread"],
+            ["1st Quarter Total", "total"],
+          ],
+          basketball: [
+            ["Moneyline", "ml"],
+            ["Spread", "spread"],
+            ["Total Points", "total"],
+            ["Team Total", "total"],
+            ["1st Half Moneyline", "ml"],
+            ["1st Half Spread", "spread"],
+            ["1st Half Total", "total"],
+            ["1st Quarter Spread", "spread"],
+            ["1st Quarter Total", "total"],
+          ],
+          baseball: [
+            ["Moneyline", "ml"],
+            ["Run Line", "spread"],
+            ["Total Runs", "total"],
+            ["Team Total Runs", "total"],
+            ["1st 5 Innings Moneyline", "ml"],
+            ["1st 5 Innings Run Line", "spread"],
+            ["1st 5 Innings Total", "total"],
+            ["No Run 1st Inning (NRFI)", "pick"],
+            ["Yes Run 1st Inning (YRFI)", "pick"],
+          ],
+          hockey: [
+            ["Moneyline", "ml"],
+            ["Puck Line", "spread"],
+            ["Total Goals", "total"],
+            ["Team Total Goals", "total"],
+            ["60-Minute Line (3-Way)", "ml"],
+            ["1st Period Moneyline", "ml"],
+            ["1st Period Total", "total"],
+          ],
+          soccer: [
+            ["Moneyline (3-Way)", "ml"],
+            ["Double Chance", "pick"],
+            ["Draw No Bet", "ml"],
+            ["Asian Handicap", "spread"],
+            ["Total Goals", "total"],
+            ["Team Total Goals", "total"],
+            ["Both Teams To Score", "pick"],
+            ["Correct Score", "pick"],
+            ["Total Corners", "total"],
+            ["Total Cards", "total"],
+          ],
+          tennis: [
+            ["Match Winner", "ml"],
+            ["Set Spread", "spread"],
+            ["Game Spread", "spread"],
+            ["Total Games", "total"],
+            ["Total Sets", "total"],
+            ["Set Betting (Correct Score)", "pick"],
+            ["1st Set Winner", "ml"],
+          ],
+          mma: [
+            ["Moneyline", "ml"],
+            ["Method of Victory", "pick"],
+            ["Round Betting", "pick"],
+            ["Total Rounds", "total"],
+            ["Goes the Distance", "pick"],
+          ],
+          golf: [
+            ["Outright Winner", "pick"],
+            ["Top 5 Finish", "pick"],
+            ["Top 10 Finish", "pick"],
+            ["Top 20 Finish", "pick"],
+            ["Make / Miss Cut", "pick"],
+            ["Head-to-Head Matchup", "pick"],
+            ["First Round Leader", "pick"],
+            ["Round Score", "total"],
+          ],
+          other: [
+            ["Moneyline", "ml"],
+            ["Spread", "spread"],
+            ["Total", "total"],
+          ],
+        };
+        const ou = (names) => names.map((n) => [n, "ou"]);
+        const yn = (names) => names.map((n) => [n, "yn"]);
+        const PROPS = {
+          football: [
+            ...ou([
+              "Passing Yards",
+              "Passing TDs",
+              "Pass Completions",
+              "Pass Attempts",
+              "Interceptions Thrown",
+              "Longest Completion",
+              "Rushing Yards",
+              "Rushing Attempts",
+              "Longest Rush",
+              "Receiving Yards",
+              "Receptions",
+              "Longest Reception",
+              "Rush + Rec Yards",
+              "Pass + Rush Yards",
+              "Sacks",
+              "Tackles + Assists",
+              "Field Goals Made",
+              "Kicking Points",
+            ]),
+            ...yn(["Anytime TD", "First TD", "2+ TDs", "Last TD"]),
+          ],
+          basketball: [
+            ...ou([
+              "Points",
+              "Rebounds",
+              "Assists",
+              "3-Pointers Made",
+              "Steals",
+              "Blocks",
+              "Turnovers",
+              "Pts + Reb + Ast",
+              "Pts + Reb",
+              "Pts + Ast",
+              "Reb + Ast",
+              "Steals + Blocks",
+            ]),
+            ...yn(["Double-Double", "Triple-Double", "First Basket"]),
+          ],
+          baseball: [
+            ...ou([
+              "Hits",
+              "Total Bases",
+              "RBIs",
+              "Runs Scored",
+              "Hits + Runs + RBIs",
+              "Singles",
+              "Doubles",
+              "Stolen Bases",
+              "Walks",
+              "Batter Strikeouts",
+              "Pitcher Strikeouts",
+              "Pitching Outs",
+              "Hits Allowed",
+              "Earned Runs Allowed",
+              "Walks Allowed",
+            ]),
+            ...yn(["Home Run", "Pitcher to Record Win"]),
+          ],
+          hockey: [
+            ...ou([
+              "Points",
+              "Goals",
+              "Assists",
+              "Shots on Goal",
+              "Saves",
+              "Goals Against",
+              "Power Play Points",
+              "Blocked Shots",
+              "Hits",
+            ]),
+            ...yn(["Anytime Goal Scorer", "First Goal Scorer", "Shutout"]),
+          ],
+          soccer: [
+            ...ou(["Shots", "Shots on Target", "Saves", "Tackles", "Passes"]),
+            ...yn([
+              "Anytime Goalscorer",
+              "First Goalscorer",
+              "To Assist",
+              "Score or Assist",
+              "To Be Carded",
+            ]),
+          ],
+          tennis: [...ou(["Aces", "Double Faults", "Games Won"])],
+          mma: [
+            ...ou(["Significant Strikes", "Takedowns"]),
+            ...yn(["Win by KO/TKO", "Win by Submission", "Win by Decision"]),
+          ],
+          golf: [...ou(["Birdies", "Round Score"])],
+          other: [...ou(["Player Prop"]), ...yn(["Player Yes/No Prop"])],
+        };
+        const MULTI = [
+          ["Parlay", "pick"],
+          ["Same Game Parlay", "pick"],
+          ["Teaser", "pick"],
+          ["Futures", "pick"],
+          ["Live Bet", "pick"],
+          ["Other", "pick"],
+        ];
+        const SPORTS = [
+          ["NFL", "football"],
+          ["NCAAF", "football"],
+          ["NBA", "basketball"],
+          ["WNBA", "basketball"],
+          ["NCAAB", "basketball"],
+          ["MLB", "baseball"],
+          ["NHL", "hockey"],
+          ["Soccer", "soccer"],
+          ["Tennis", "tennis"],
+          ["UFC/MMA", "mma"],
+          ["Golf", "golf"],
+          ["Other", "other"],
+        ];
+        function familyOf(sport) {
+          const hit = SPORTS.find(
+            ([n]) => n.toLowerCase() === String(sport || "").toLowerCase(),
+          );
+          return hit ? hit[1] : "other";
+        }
+        function marketsFor(sport) {
+          const f = familyOf(sport);
+          return [
+            ["Game lines", LINES[f]],
+            ["Player props", PROPS[f]],
+            ["Parlays & other", MULTI],
+          ];
+        }
+        function kindOf(sport, type) {
+          for (const [, list] of marketsFor(sport)) {
+            const m = list.find(([n]) => n === type);
+            if (m) return m[1];
+          }
+          return "pick";
+        }
+        const fmtLine = (n) =>
+          n == null || n === "" ? "" : (n > 0 ? "+" : "") + n;
+        // One-line description of what was bet, e.g. "P. Mahomes Over 274.5 Passing Yards"
+        function describe(b) {
+          const kind = b.kind || kindOf(b.sport, b.type);
+          const pick = b.pick || "";
+          switch (kind) {
+            case "ou":
+              return [b.player, b.side, b.line, b.type]
+                .filter((x) => x != null && x !== "")
+                .join(" ");
+            case "yn":
+              return [b.player, b.side === "No" ? "No" : "", b.type]
+                .filter(Boolean)
+                .join(" ");
+            case "total":
+              return [b.type + ":", b.side, b.line, pick && "· " + pick]
+                .filter((x) => x != null && x !== "")
+                .join(" ");
+            case "spread":
+              return [pick, fmtLine(b.line), "(" + b.type + ")"]
+                .filter(Boolean)
+                .join(" ");
+            case "ml":
+              return [pick, "(" + b.type + ")"].filter(Boolean).join(" ");
+            default:
+              return [b.type, pick && "· " + pick].filter(Boolean).join(" ");
+          }
+        }
+
         // ---------- filters / sorting ----------
         let sortKey = "date";
         let sortDir = -1;
@@ -828,7 +1093,7 @@
             if (bk && (b.book || "—") !== bk) return false;
             if (minDate && b.date < minDate) return false;
             if (q) {
-              const hay = [b.event, b.pick, b.notes, b.sport, b.book, b.type]
+              const hay = [b.event, describe(b), b.notes, b.sport, b.book]
                 .join(" ")
                 .toLowerCase();
               if (!hay.includes(q)) return false;
@@ -1007,7 +1272,8 @@
           max += span * 0.08;
           const x = (i) =>
             padL + (i / Math.max(1, pts.length - 1)) * (W - padL - padR);
-          const y = (v) => padT + (1 - (v - min) / (max - min)) * (H - padT - padB);
+          const y = (v) =>
+            padT + (1 - (v - min) / (max - min)) * (H - padT - padB);
           const css = getComputedStyle(document.documentElement);
           const border = css.getPropertyValue("--border").trim();
           const muted = css.getPropertyValue("--muted").trim();
@@ -1026,7 +1292,10 @@
           }
           const zeroY = y(base);
           const line = pts
-            .map((p, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p.y).toFixed(1))
+            .map(
+              (p, i) =>
+                (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p.y).toFixed(1),
+            )
             .join(" ");
           const area =
             line +
@@ -1070,12 +1339,13 @@
               '<div class="empty" style="padding:20px">No data yet</div>';
             return;
           }
-          $("breakdown").innerHTML = `<table><thead><tr><th></th><th class="num">W-L</th><th class="num">P/L</th><th class="num">ROI</th></tr></thead><tbody>${rows
-            .map(
-              (r) =>
-                `<tr><td>${esc(r.k)}</td><td class="num">${r.s.won}-${r.s.lost}</td><td class="num ${cls(r.s.profit)}">${esc(fmtSigned(r.s.profit))}</td><td class="num ${cls(r.s.roi)}">${fmtPct(r.s.roi)}</td></tr>`,
-            )
-            .join("")}</tbody></table>`;
+          $("breakdown").innerHTML =
+            `<table><thead><tr><th></th><th class="num">W-L</th><th class="num">P/L</th><th class="num">ROI</th></tr></thead><tbody>${rows
+              .map(
+                (r) =>
+                  `<tr><td>${esc(r.k)}</td><td class="num">${r.s.won}-${r.s.lost}</td><td class="num ${cls(r.s.profit)}">${esc(fmtSigned(r.s.profit))}</td><td class="num ${cls(r.s.roi)}">${fmtPct(r.s.roi)}</td></tr>`,
+              )
+              .join("")}</tbody></table>`;
         }
 
         function renderRows(list) {
@@ -1087,7 +1357,7 @@
             empty.classList.remove("hidden");
             empty.innerHTML = state.bets.length
               ? "No bets match these filters."
-              : 'No bets yet. Click <b>+ Add bet</b> to log your first one.';
+              : "No bets yet. Click <b>+ Add bet</b> to log your first one.";
             return;
           }
           empty.classList.add("hidden");
@@ -1110,7 +1380,7 @@
                 b.status === "pending"
                   ? `<button class="small" data-act="won" data-id="${b.id}" title="Mark won">✓ W</button><button class="small" data-act="lost" data-id="${b.id}" title="Mark lost">✗ L</button>`
                   : "";
-              const sub = [b.pick, b.type, b.book].filter(Boolean).join(" · ");
+              const sub = [describe(b), b.book].filter(Boolean).join(" · ");
               return `<tr>
                 <td style="white-space:nowrap">${esc(fmtDate(b.date))}</td>
                 <td><div class="event">${esc(b.event)}</div>${sub ? `<div class="event-sub">${esc(sub)}</div>` : ""}${b.notes ? `<div class="event-sub" title="${esc(b.notes)}">📝 ${esc(b.notes.length > 60 ? b.notes.slice(0, 60) + "…" : b.notes)}</div>` : ""}</td>
@@ -1141,16 +1411,21 @@
           fillSelect($("fSport"), uniq("sport"), "All sports");
           fillSelect($("fBook"), uniq("book"), "All books");
           const defaults = {
-            sport: ["NFL", "NBA", "MLB", "NHL", "NCAAF", "NCAAB", "Soccer", "Tennis", "UFC/MMA", "Golf"],
-            book: ["DraftKings", "FanDuel", "BetMGM", "Caesars", "ESPN Bet", "bet365", "Fanatics"],
+            book: [
+              "DraftKings",
+              "FanDuel",
+              "BetMGM",
+              "Caesars",
+              "ESPN Bet",
+              "bet365",
+              "Fanatics",
+            ],
           };
-          $("sportList").innerHTML = [
-            ...new Set([...uniq("sport").filter((v) => v !== "—"), ...defaults.sport]),
-          ]
-            .map((v) => `<option value="${esc(v)}">`)
-            .join("");
           $("bookList").innerHTML = [
-            ...new Set([...uniq("book").filter((v) => v !== "—"), ...defaults.book]),
+            ...new Set([
+              ...uniq("book").filter((v) => v !== "—"),
+              ...defaults.book,
+            ]),
           ]
             .map((v) => `<option value="${esc(v)}">`)
             .join("");
@@ -1160,7 +1435,8 @@
           document.querySelectorAll("th.sortable").forEach((th) => {
             const base = th.textContent.replace(/ [▲▼]$/, "");
             th.textContent =
-              base + (th.dataset.sort === sortKey ? (sortDir > 0 ? " ▲" : " ▼") : "");
+              base +
+              (th.dataset.sort === sortKey ? (sortDir > 0 ? " ▲" : " ▼") : "");
           });
         }
 
@@ -1182,10 +1458,20 @@
           editingId = bet ? bet.id : null;
           $("dlgTitle").textContent = bet ? "Edit bet" : "Add bet";
           $("bDate").value = bet ? bet.date : todayStr();
-          $("bSport").value = bet ? bet.sport || "" : "";
+          let sport = bet ? bet.sport || "Other" : "NFL";
+          if (!bet && state.bets.length) {
+            const last = [...state.bets].sort(
+              (a, b) => (b.created || 0) - (a.created || 0),
+            )[0];
+            sport = last.sport || sport;
+          }
+          fillSports(sport);
+          fillMarkets(bet ? bet.type : null);
           $("bEvent").value = bet ? bet.event : "";
           $("bPick").value = bet ? bet.pick || "" : "";
-          $("bType").value = bet ? bet.type || "Moneyline" : "Moneyline";
+          $("bPlayer").value = bet ? bet.player || "" : "";
+          $("bLine").value = bet && bet.line != null ? bet.line : "";
+          updateMarketFields(bet ? bet.side : null);
           $("bBook").value = bet ? bet.book || "" : "";
           $("bOdds").value = bet ? bet.oddsInput || toAmerican(bet.odds) : "";
           $("bStake").value = bet ? bet.stake : "";
@@ -1197,13 +1483,101 @@
             const last = [...state.bets].sort(
               (a, b) => (b.created || 0) - (a.created || 0),
             )[0];
-            $("bSport").value = last.sport || "";
             $("bBook").value = last.book || "";
           }
           updatePreview();
           dlg.showModal();
           $("bEvent").focus();
         }
+        function fillSports(current) {
+          const names = SPORTS.map(([n]) => n);
+          if (current && !names.includes(current)) names.splice(-1, 0, current);
+          $("bSport").innerHTML = names
+            .map((n) => `<option value="${esc(n)}">${esc(n)}</option>`)
+            .join("");
+          $("bSport").value = current || "NFL";
+        }
+        function fillMarkets(current) {
+          const groups = marketsFor($("bSport").value);
+          const known = groups.some(([, l]) => l.some(([n]) => n === current));
+          $("bType").innerHTML =
+            (current && !known
+              ? `<option value="${esc(current)}">${esc(current)}</option>`
+              : "") +
+            groups
+              .map(
+                ([label, list]) =>
+                  `<optgroup label="${label}">${list
+                    .map(
+                      ([n]) => `<option value="${esc(n)}">${esc(n)}</option>`,
+                    )
+                    .join("")}</optgroup>`,
+              )
+              .join("");
+          const prev = $("bType").dataset.prev;
+          const all = groups.flatMap(([, l]) => l.map(([n]) => n));
+          $("bType").value = current || (all.includes(prev) ? prev : all[0]);
+        }
+        function updateMarketFields(side) {
+          const kind = kindOf($("bSport").value, $("bType").value);
+          $("bType").dataset.prev = $("bType").value;
+          const isProp = kind === "ou" || kind === "yn";
+          $("playerWrap").classList.toggle("hidden", !isProp);
+          const sides =
+            kind === "ou" || kind === "total"
+              ? ["Over", "Under"]
+              : kind === "yn"
+                ? ["Yes", "No"]
+                : null;
+          $("sideWrap").classList.toggle("hidden", !sides);
+          if (sides) {
+            const cur = side || $("bSide").value;
+            $("bSide").innerHTML = sides
+              .map((v) => `<option>${v}</option>`)
+              .join("");
+            if (sides.includes(cur)) $("bSide").value = cur;
+          }
+          const hasLine =
+            kind === "ou" || kind === "total" || kind === "spread";
+          $("lineWrap").classList.toggle("hidden", !hasLine);
+          $("lineLabel").textContent = kind === "spread" ? "Spread" : "Line";
+          $("bLine").placeholder =
+            kind === "spread"
+              ? "e.g. -3.5"
+              : kind === "ou"
+                ? "e.g. 274.5"
+                : "e.g. 47.5";
+          const pickCfg = {
+            ml: ["Team / Side", "e.g. Chiefs"],
+            spread: ["Team", "e.g. Chiefs"],
+            total: ["Details (optional)", "e.g. team name for a team total"],
+            ou: ["Details (optional)", ""],
+            yn: ["Details (optional)", ""],
+            pick: ["Selection", "e.g. legs of the parlay, outcome, etc."],
+          }[kind];
+          $("pickLabel").textContent = pickCfg[0];
+          $("bPick").placeholder = pickCfg[1];
+          // grid: put side + line on one row; full-width when only one shows
+          $("sideWrap").classList.toggle("full", sides && !hasLine);
+          $("lineWrap").classList.toggle("full", hasLine && !sides);
+          // suggest players already used in this sport
+          const players = [
+            ...new Set(
+              state.bets
+                .filter((b) => b.player && b.sport === $("bSport").value)
+                .map((b) => b.player),
+            ),
+          ].sort();
+          $("playerList").innerHTML = players
+            .map((n) => `<option value="${esc(n)}">`)
+            .join("");
+        }
+        $("bSport").addEventListener("change", () => {
+          fillMarkets(null);
+          updateMarketFields();
+        });
+        $("bType").addEventListener("change", () => updateMarketFields());
+
         function closeDialog() {
           dlg.close();
           editingId = null;
@@ -1227,7 +1601,8 @@
           }
           if (dec && stake > 0) {
             const win = stake * (dec - 1);
-            $("preview").innerHTML = `To win <b>${esc(fmtMoney(win))}</b> · payout <b>${esc(fmtMoney(stake + win))}</b>`;
+            $("preview").innerHTML =
+              `To win <b>${esc(fmtMoney(win))}</b> · payout <b>${esc(fmtMoney(stake + win))}</b>`;
           } else {
             $("preview").textContent = "";
           }
@@ -1248,12 +1623,34 @@
             return;
           }
           const status = $("bStatus").value;
+          const sport = $("bSport").value;
+          const type = $("bType").value;
+          const kind = kindOf(sport, type);
+          const isProp = kind === "ou" || kind === "yn";
+          const hasLine =
+            kind === "ou" || kind === "total" || kind === "spread";
+          const hasSide = kind === "ou" || kind === "total" || kind === "yn";
+          if (isProp && !$("bPlayer").value.trim()) {
+            $("bPlayer").focus();
+            toast("Enter the player");
+            return;
+          }
+          const lineVal = $("bLine").value.trim();
+          if (kind === "ou" && lineVal === "") {
+            $("bLine").focus();
+            toast("Enter the line");
+            return;
+          }
           const data = {
             date: $("bDate").value || todayStr(),
-            sport: $("bSport").value.trim(),
+            sport,
             event: $("bEvent").value.trim(),
             pick: $("bPick").value.trim(),
-            type: $("bType").value,
+            type,
+            kind,
+            player: isProp ? $("bPlayer").value.trim() : "",
+            side: hasSide ? $("bSide").value : "",
+            line: hasLine && lineVal !== "" ? Number(lineVal) : null,
             book: $("bBook").value.trim(),
             odds: dec,
             oddsInput: $("bOdds").value.trim(),
@@ -1312,7 +1709,8 @@
             if (sortKey === k) sortDir = -sortDir;
             else {
               sortKey = k;
-              sortDir = k === "date" || k === "profit" || k === "stake" ? -1 : 1;
+              sortDir =
+                k === "date" || k === "profit" || k === "stake" ? -1 : 1;
             }
             render();
           }),
@@ -1324,9 +1722,7 @@
           breakdownKey = b.dataset.key;
           document
             .querySelectorAll("#breakdownTabs button")
-            .forEach((x) =>
-              x.setAttribute("aria-selected", String(x === b)),
-            );
+            .forEach((x) => x.setAttribute("aria-selected", String(x === b)));
           renderBreakdown(filtered());
         });
 
@@ -1388,8 +1784,12 @@
             "date",
             "sport",
             "event",
+            "bet",
+            "player",
+            "side",
+            "line",
             "pick",
-            "type",
+            "description",
             "book",
             "odds_american",
             "odds_decimal",
@@ -1408,8 +1808,12 @@
                 b.date,
                 b.sport,
                 b.event,
-                b.pick,
                 b.type,
+                b.player,
+                b.side,
+                b.line,
+                b.pick,
+                describe(b),
                 b.book,
                 toAmerican(b.odds),
                 b.odds.toFixed(3),
