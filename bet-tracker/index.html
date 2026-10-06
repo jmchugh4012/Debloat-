@@ -3,71 +3,61 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bet Tracker</title>
+    <title>JMbets</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%23bef23c'/%3E%3Cpath d='M9 34 L19 24 L26 29 L39 14 M31 14 H39 V22' fill='none' stroke='%230a1004' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
     <style>
+      /* JMbets theme: night (default) + day */
       :root {
-        --bg: #f6f7f9;
+        --bg: #070b10;
+        --bg-glow: rgba(190, 242, 60, 0.07);
+        --surface: #0f151d;
+        --surface-2: #17202b;
+        --border: #222d3a;
+        --text: #eef2f6;
+        --muted: #8593a5;
+        --accent: #bef23c;
+        --accent-text: #0a1004;
+        --gold: #f5c542;
+        --win: #4ade80;
+        --win-bg: rgba(74, 222, 128, 0.12);
+        --loss: #ff6b6b;
+        --loss-bg: rgba(255, 107, 107, 0.12);
+        --push: #9aa6b5;
+        --push-bg: rgba(154, 166, 181, 0.14);
+        --pending: #f5c542;
+        --pending-bg: rgba(245, 197, 66, 0.13);
+        --cash: #a78bfa;
+        --cash-bg: rgba(167, 139, 250, 0.14);
+        --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+        --radius: 14px;
+        color-scheme: dark;
+      }
+      :root[data-theme="light"] {
+        --bg: #f3f5ef;
+        --bg-glow: rgba(101, 163, 13, 0.1);
         --surface: #ffffff;
-        --surface-2: #f0f2f5;
-        --border: #dfe3e8;
-        --text: #16191d;
-        --muted: #5f6b7a;
-        --accent: #2563eb;
+        --surface-2: #eef1e8;
+        --border: #dde2d5;
+        --text: #10160c;
+        --muted: #5d6857;
+        --accent: #4d7c0f;
         --accent-text: #ffffff;
+        --gold: #a16207;
         --win: #15803d;
         --win-bg: #dcfce7;
-        --loss: #b91c1c;
+        --loss: #c81e1e;
         --loss-bg: #fee2e2;
         --push: #6b7280;
         --push-bg: #e5e7eb;
-        --pending: #b45309;
+        --pending: #a16207;
         --pending-bg: #fef3c7;
         --cash: #7c3aed;
         --cash-bg: #ede9fe;
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04);
-        --radius: 12px;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) {
-          --bg: #0e1116;
-          --surface: #161b22;
-          --surface-2: #1d232c;
-          --border: #2b333e;
-          --text: #e6e9ee;
-          --muted: #8d98a7;
-          --accent: #3b82f6;
-          --win: #4ade80;
-          --win-bg: #14321f;
-          --loss: #f87171;
-          --loss-bg: #3a1717;
-          --push: #9ca3af;
-          --push-bg: #262b33;
-          --pending: #fbbf24;
-          --pending-bg: #3a2c0c;
-          --cash: #a78bfa;
-          --cash-bg: #2a2142;
-          --shadow: none;
-        }
-      }
-      :root[data-theme="dark"] {
-        --bg: #0e1116;
-        --surface: #161b22;
-        --surface-2: #1d232c;
-        --border: #2b333e;
-        --text: #e6e9ee;
-        --muted: #8d98a7;
-        --accent: #3b82f6;
-        --win: #4ade80;
-        --win-bg: #14321f;
-        --loss: #f87171;
-        --loss-bg: #3a1717;
-        --push: #9ca3af;
-        --push-bg: #262b33;
-        --pending: #fbbf24;
-        --pending-bg: #3a2c0c;
-        --cash: #a78bfa;
-        --cash-bg: #2a2142;
-        --shadow: none;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.04);
+        color-scheme: light;
       }
 
       * {
@@ -75,7 +65,11 @@
       }
       body {
         margin: 0;
-        background: var(--bg);
+        background:
+          radial-gradient(1200px 500px at 85% -10%, var(--bg-glow), transparent 60%),
+          var(--bg);
+        background-attachment: fixed;
+        min-height: 100vh;
         color: var(--text);
         font:
           14px/1.45 system-ui,
@@ -102,6 +96,52 @@
         font-size: 22px;
         margin: 0;
         letter-spacing: -0.01em;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo {
+        width: 44px;
+        height: 44px;
+        flex: none;
+      }
+      .wordmark {
+        font-size: 28px;
+        font-weight: 900;
+        font-style: italic;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        margin: 0;
+      }
+      .wordmark .jm {
+        color: var(--accent);
+      }
+      .tagline {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .stat {
+        position: relative;
+        overflow: hidden;
+      }
+      .stat.hero {
+        border-color: var(--accent);
+        background:
+          linear-gradient(135deg, var(--bg-glow), transparent 70%),
+          var(--surface);
+      }
+      .stat.hero::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 4px;
+        background: var(--accent);
       }
       h2 {
         font-size: 15px;
@@ -427,14 +467,33 @@
   <body>
     <div class="wrap">
       <header>
-        <div>
-          <h1>Bet Tracker</h1>
-          <div class="muted" style="font-size: 13px">
-            Saved privately in this browser
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+            <rect width="48" height="48" rx="12" fill="var(--accent)" />
+            <path
+              d="M9 34 L19 24 L26 29 L39 14"
+              fill="none"
+              stroke="var(--accent-text)"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M31 14 H39 V22"
+              fill="none"
+              stroke="var(--accent-text)"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <div>
+            <h1 class="wordmark"><span class="jm">JM</span>bets</h1>
+            <div class="tagline">Track every play</div>
           </div>
         </div>
         <div class="row">
-          <button id="themeBtn" title="Toggle theme">◐ Theme</button>
+          <button id="themeBtn" title="Switch day/night theme">☀ Day</button>
           <button id="exportCsvBtn">Export CSV</button>
           <button id="exportJsonBtn">Backup</button>
           <button id="importBtn">Restore</button>
@@ -902,8 +961,8 @@
           ];
           $("stats").innerHTML = tiles
             .map(
-              (t) =>
-                `<div class="card stat"><div class="label">${t.label}</div><div class="value ${t.c || ""}">${esc(t.value)}</div><div class="sub">${esc(t.sub)}</div></div>`,
+              (t, i) =>
+                `<div class="card stat${i === 0 ? " hero" : ""}"><div class="label">${t.label}</div><div class="value ${t.c || ""}">${esc(t.value)}</div><div class="sub">${esc(t.sub)}</div></div>`,
             )
             .join("");
         }
@@ -1286,16 +1345,15 @@
 
         // ---------- theme ----------
         function applyTheme() {
-          if (state.theme)
-            document.documentElement.setAttribute("data-theme", state.theme);
-          else document.documentElement.removeAttribute("data-theme");
+          const light = state.theme === "light";
+          document.documentElement.setAttribute(
+            "data-theme",
+            light ? "light" : "dark",
+          );
+          $("themeBtn").textContent = light ? "☾ Night" : "☀ Day";
         }
         $("themeBtn").addEventListener("click", () => {
-          const dark =
-            state.theme === "dark" ||
-            (!state.theme &&
-              matchMedia("(prefers-color-scheme: dark)").matches);
-          state.theme = dark ? "light" : "dark";
+          state.theme = state.theme === "light" ? "dark" : "light";
           applyTheme();
           save();
           render();
@@ -1316,7 +1374,7 @@
         }
         $("exportJsonBtn").addEventListener("click", () => {
           download(
-            `bets-backup-${todayStr()}.json`,
+            `jmbets-backup-${todayStr()}.json`,
             JSON.stringify(
               { bets: state.bets, bankroll: state.bankroll },
               null,
@@ -1364,7 +1422,7 @@
                 .join(","),
             ),
           );
-          download(`bets-${todayStr()}.csv`, lines.join("\n"), "text/csv");
+          download(`jmbets-${todayStr()}.csv`, lines.join("\n"), "text/csv");
         });
         $("importBtn").addEventListener("click", () => $("importFile").click());
         $("importFile").addEventListener("change", async (e) => {

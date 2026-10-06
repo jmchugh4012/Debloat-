@@ -1,6 +1,6 @@
-# Bet Tracker
+# JMbets
 
-A standalone, single-file bet tracking site. No install, no server, no account.
+JMbets is a standalone, single-file bet tracking site. No install, no server, no account.
 
 **To use:** open `index.html` in any browser (double-click it). Bets are saved in that browser's local storage.
 
@@ -10,6 +10,7 @@ A standalone, single-file bet tracking site. No install, no server, no account.
 - Profit-over-time chart with optional starting bankroll
 - Breakdown by sport, sportsbook and bet type
 - Search, filter and sort; press `n` to add a bet
+- Night (default) and day themes
 - Export to CSV, plus **Backup**/**Restore** (JSON) to move data between devices or browsers
 
 > Clearing your browser data deletes your bets — use **Backup** regularly.
