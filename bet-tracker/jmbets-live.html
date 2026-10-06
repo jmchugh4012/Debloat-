@@ -3,16 +3,17 @@
     <style id="app-style">
       /* Layout: a betting ledger. Summary strip, open slips, chart + splits, then the full ledger. */
       :root {
-        --bg: #f3f4f2;
+        --bg: #f4f6ef;
         --surface: #ffffff;
-        --surface-2: #f1f2ef;
-        --border: #e1e3df;
-        --rule: #cfd2cc;
-        --text: #131614;
-        --muted: #686e69;
-        --accent: #131614;
-        --accent-text: #ffffff;
-        --win: #157347;
+        --surface-2: #f0f3e8;
+        --border: #e0e4d6;
+        --rule: #cdd3c1;
+        --text: #141810;
+        --muted: #666e5c;
+        --accent: #b5f23d;
+        --accent-text: #141810;
+        --accent-ink: #4f7d0b;
+        --win: #3f7d14;
         --win-bg: #e3f2ea;
         --loss: #c0352b;
         --loss-bg: #fbe7e5;
@@ -30,16 +31,17 @@
       }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme="light"]) {
-          --bg: #0f1110;
-          --surface: #161917;
-          --surface-2: #1d201e;
-          --border: #272b28;
-          --rule: #353a36;
-          --text: #e9ece9;
-          --muted: #8d948e;
-          --accent: #e9ece9;
-          --accent-text: #0f1110;
-          --win: #4cc38a;
+          --bg: #0e110b;
+          --surface: #151912;
+          --surface-2: #1c2118;
+          --border: #262c21;
+          --rule: #343b2d;
+          --text: #ebf0e4;
+          --muted: #8e9884;
+          --accent: #b5f23d;
+          --accent-text: #10140b;
+          --accent-ink: #b5f23d;
+          --win: #8fd14f;
           --win-bg: #15291f;
           --loss: #f0695e;
           --loss-bg: #331a18;
@@ -53,16 +55,17 @@
         }
       }
       :root[data-theme="dark"] {
-        --bg: #0f1110;
-        --surface: #161917;
-        --surface-2: #1d201e;
-        --border: #272b28;
-        --rule: #353a36;
-        --text: #e9ece9;
-        --muted: #8d948e;
-        --accent: #e9ece9;
-        --accent-text: #0f1110;
-        --win: #4cc38a;
+        --bg: #0e110b;
+        --surface: #151912;
+        --surface-2: #1c2118;
+        --border: #262c21;
+        --rule: #343b2d;
+        --text: #ebf0e4;
+        --muted: #8e9884;
+        --accent: #b5f23d;
+        --accent-text: #10140b;
+        --accent-ink: #b5f23d;
+        --win: #8fd14f;
         --win-bg: #15291f;
         --loss: #f0695e;
         --loss-bg: #331a18;
@@ -113,8 +116,8 @@
         text-transform: uppercase;
       }
       .wordmark .jm {
-        background: var(--text);
-        color: var(--bg);
+        background: var(--accent);
+        color: var(--accent-text);
         padding: 0 5px;
         margin-right: 2px;
         border-radius: 3px;
@@ -198,7 +201,7 @@
       select:focus,
       textarea:focus,
       button:focus-visible {
-        outline: 2px solid var(--text);
+        outline: 2px solid var(--accent-ink);
         outline-offset: 1px;
       }
       label {
@@ -326,7 +329,7 @@
       .tabs button[aria-selected="true"] {
         color: var(--text);
         font-weight: 600;
-        border-bottom-color: var(--text);
+        border-bottom-color: var(--accent-ink);
       }
 
       table {
@@ -555,7 +558,8 @@
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: var(--win);
+        background: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent-ink);
         margin-right: 6px;
         vertical-align: 1px;
       }
@@ -621,8 +625,12 @@
         font-variant-numeric: tabular-nums;
       }
       .play-odds .o {
-        font-size: 18px;
+        font-size: 15px;
         font-weight: 500;
+        background: var(--accent);
+        color: var(--accent-text);
+        padding: 1px 7px;
+        border-radius: 4px;
       }
       .play-odds .u {
         font-size: 12px;
@@ -1636,7 +1644,7 @@
           const last = pts[pts.length - 1].y;
           const lineColor =
             last >= base
-              ? css.getPropertyValue("--win").trim()
+              ? css.getPropertyValue("--accent-ink").trim()
               : css.getPropertyValue("--loss").trim();
 
           let grid = "";
